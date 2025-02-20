@@ -1,0 +1,11 @@
+{
+    "configurations": [
+        {
+            "name": "Debug Sim",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "robotpy",
+            "args": ["sim"]
+        }
+    ]
+}
