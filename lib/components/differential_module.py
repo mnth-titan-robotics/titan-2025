@@ -17,9 +17,9 @@ class DifferentialModule:
     drivingMotorReduction: float = self._config.constants.drivingMotorReduction
     drivingEncoderPositionConversionFactor: float = (self._config.constants.wheelDiameter * math.pi) / drivingMotorReduction
     if self._config.constants.drivingMotorControllerType == MotorControllerType.SparkFlex:
-      self._drivingMotor = SparkFlex(self._config.drivingMotorCANId, SparkLowLevel.MotorType.kBrushed)
+      self._drivingMotor = SparkFlex(self._config.drivingMotorCANId, SparkLowLevel.MotorType.kBrushless)
     else: 
-      self._drivingMotor = SparkMax(self._config.drivingMotorCANId, SparkLowLevel.MotorType.kBrushed)
+      self._drivingMotor = SparkMax(self._config.drivingMotorCANId, SparkLowLevel.MotorType.kBrushless)
     self._drivingMotorConfig = SparkBaseConfig()
     (self._drivingMotorConfig
       .setIdleMode(SparkBaseConfig.IdleMode.kBrake)

@@ -1,9 +1,9 @@
 from commands2 import Command, cmd
-from wpilib import DriverStation, SmartDashboard
+from wpilib import DriverStation, SmartDashboard, SPI
 from lib import logger, utils
 from lib.classes import TargetAlignmentMode
 from lib.controllers.game_controller import GameController
-from lib.sensors.gyro_sensor_navx2 import GyroSensor_NAVX2
+from lib.sensors.gyro_sensor_adis16470 import GyroSensor_ADIS16470
 from lib.sensors.pose_sensor import PoseSensor
 from core.commands.auto import AutoCommands
 from core.commands.game import GameCommands
@@ -12,6 +12,9 @@ from core.subsystems.roller import RollerSubsystem
 from core.services.localization import LocalizationService
 from core.classes import TargetAlignmentLocation, TargetType
 import core.constants as constants
+import wpilib
+from wpimath import units
+from wpilib import ADIS16470_IMU as IMU
 
 class RobotCore:
   def __init__(self) -> None:
@@ -24,7 +27,15 @@ class RobotCore:
     utils.addRobotPeriodic(self._periodic)
 
   def _initSensors(self) -> None:
-    self.gyroSensor = GyroSensor_NAVX2(constants.Sensors.Gyro.NAVX2.kComType)
+    self.gyroSensor = GyroSensor_ADIS16470(
+      wpilib.SPI.Port.kMXP, 
+      imuAxisRoll=IMU.IMUAxis.kZ, 
+      imuAxisPitch=IMU.IMUAxis.kX, 
+      imuAxisYaw=IMU.IMUAxis.kY, 
+      initCalibrationTime=IMU.CalibrationTime._1s, 
+      commandCalibrationTime= IMU.CalibrationTime._1s, 
+      commandCalibrationDelay=1.0
+    )
     self.poseSensors = tuple(PoseSensor(c) for c in constants.Sensors.Pose.kPoseSensorConfigs)
     SmartDashboard.putString("Robot/Sensors/Camera/Streams", utils.toJson(constants.Sensors.Camera.kStreams))
     
@@ -48,7 +59,8 @@ class RobotCore:
   def _initTriggers(self) -> None:
     self.driveSubsystem.setDefaultCommand(
       self.driveSubsystem.driveCommand(
-        self.driverController.getLeftY,
+        lambda: - self.driverController.getLeftY(),
+        self.driverController.getLeftX,
         self.driverController.getRightX
       )
     )

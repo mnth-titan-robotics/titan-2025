@@ -1,7 +1,7 @@
 import math
 from wpimath import units
 from wpimath.geometry import Transform3d, Translation3d, Rotation3d, Pose3d, Translation2d
-from wpimath.kinematics import DifferentialDriveKinematics
+from wpimath.kinematics import MecanumDriveKinematics as Kinematics
 from robotpy_apriltag import AprilTagField, AprilTagFieldLayout
 from navx import AHRS
 from pathplannerlib.config import RobotConfig
@@ -12,7 +12,7 @@ from lib import logger, utils
 from lib.classes import Alliance, PID, Tolerance, MotorControllerType, DifferentialModuleConstants, DifferentialModuleConfig, DifferentialModuleLocation, PoseSensorConfig, DriftCorrectionConstants, TargetAlignmentConstants
 from core.classes import Target, TargetType, TargetAlignmentLocation
 
-APRIL_TAG_FIELD_LAYOUT = AprilTagFieldLayout().loadField(AprilTagField.k2025Reefscape)
+APRIL_TAG_FIELD_LAYOUT = AprilTagFieldLayout().loadField(AprilTagField.k2025ReefscapeAndyMark)
 PATHPLANNER_ROBOT_CONFIG = RobotConfig.fromGUISettings()
 
 class Subsystems:
@@ -35,12 +35,17 @@ class Subsystems:
 
     kDifferentialModuleConfigs: tuple[DifferentialModuleConfig, ...] = (
       DifferentialModuleConfig(DifferentialModuleLocation.LeftFront, 10, None, True, _differentialModuleConstants),
-      DifferentialModuleConfig(DifferentialModuleLocation.LeftRear, 11, 10, True, _differentialModuleConstants),
-      DifferentialModuleConfig(DifferentialModuleLocation.RightFront, 12, 13, False, _differentialModuleConstants),
+      DifferentialModuleConfig(DifferentialModuleLocation.LeftRear, 11, None, True, _differentialModuleConstants),
+      DifferentialModuleConfig(DifferentialModuleLocation.RightFront, 12, None, False, _differentialModuleConstants),
       DifferentialModuleConfig(DifferentialModuleLocation.RightRear, 13, None, False, _differentialModuleConstants)
     )
 
-    kDriveKinematics = DifferentialDriveKinematics(kTrackWidth)
+    kDriveKinematics = Kinematics(
+      Translation2d(kWheelBase / 2.0, kTrackWidth / 2.0),
+      Translation2d(kWheelBase / 2.0, -kTrackWidth / 2.0),
+      Translation2d(-kWheelBase / 2.0, kTrackWidth / 2.0),
+      Translation2d(-kWheelBase / 2.0, -kTrackWidth / 2.0)
+    )
 
     kPathPlannerRobotConfig = PATHPLANNER_ROBOT_CONFIG
     kPathPlannerController = PPLTVController(0.02)

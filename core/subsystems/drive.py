@@ -2,7 +2,7 @@ from typing import Callable
 import math
 from commands2 import Subsystem, Command
 from wpilib import SmartDashboard, SendableChooser
-from wpilib.drive import DifferentialDrive
+from wpilib.drive import MecanumDrive
 from wpimath import units
 from wpimath.controller import PIDController
 from wpimath.filter import SlewRateLimiter
@@ -24,11 +24,13 @@ class DriveSubsystem(Subsystem):
     
     self._constants = constants.Subsystems.Drive
 
-    self._differentialModules = tuple(DifferentialModule(c) for c in self._constants.kDifferentialModuleConfigs)
+    self._differentialModules = dict((c.location, DifferentialModule(c)) for c in self._constants.kDifferentialModuleConfigs)
     
-    self._drivetrain = DifferentialDrive(
+    self._drivetrain = MecanumDrive(
       self._differentialModules[DifferentialModuleLocation.LeftFront].getMotorController(),
-      self._differentialModules[DifferentialModuleLocation.RightFront].getMotorController()
+      self._differentialModules[DifferentialModuleLocation.LeftRear].getMotorController(),
+      self._differentialModules[DifferentialModuleLocation.RightFront].getMotorController(),
+      self._differentialModules[DifferentialModuleLocation.RightRear].getMotorController()
     )
 
     self._isDriftCorrectionActive: bool = False
@@ -88,19 +90,26 @@ class DriveSubsystem(Subsystem):
 
   def driveCommand(
       self, 
-      getLeftY: Callable[[], float], 
-      getRightX: Callable[[], float]
+      getInputX: Callable[[], float], 
+      getInputY: Callable[[], float], 
+      getInputRotation: Callable[[], float]
     ) -> Command:
     return self.run(
-      lambda: self._drive(getLeftY(), getRightX())
+      lambda: self._drive(getInputX(), getInputY(), getInputRotation())
     ).withName("DriveSubsystem:Drive")
 
-  def _drive(self, speed: float, rotation: float) -> None:
-    self._drivetrain.arcadeDrive(speed, rotation, True)
+  def _drive(self, inputX: float, inputY: float, inputRotation: float) -> None:
+    self._drivetrain.driveCartesian(
+      xSpeed=inputX,
+      ySpeed=inputY,
+      zRotation=inputRotation,
+      gyroAngle=Rotation2d.fromDegrees(self._getGyroHeading())
+    )
 
   def drive(self, chassisSpeeds: ChassisSpeeds) -> None:
     wheelSpeeds = self._constants.kDriveKinematics.toWheelSpeeds(chassisSpeeds)
-    self._drivetrain.tankDrive(wheelSpeeds.left, wheelSpeeds.right)
+    # TODO: Fix this, or get rid of this method
+    # self._drivetrain.tankDrive(wheelSpeeds.left, wheelSpeeds.right)
     self.clearTargetAlignment()
 
   def getModulePositions(self) -> DifferentialDriveModulePositions:
@@ -191,7 +200,7 @@ class DriveSubsystem(Subsystem):
     self._isAlignedToTarget = False
 
   def reset(self) -> None:
-    self.drive(ChassisSpeeds())
+    self._drive(0.0, 0.0, 0.0)
     self.clearTargetAlignment()
   
   def _updateTelemetry(self) -> None:
