@@ -20,11 +20,11 @@ class GyroSensor_ADIS16470():
     self._baseKey = f'Robot/Sensors/Gyro'
     
     self._gyro = ADIS16470_IMU(
-      imuAxisYaw,
-      imuAxisPitch,
-      imuAxisRoll,
-      spiPort,
-      initCalibrationTime
+      #imuAxisYaw,
+      #imuAxisPitch,
+      #imuAxisRoll,
+      #spiPort,
+      #initCalibrationTime
     )
     
     utils.addRobotPeriodic(self._periodic)

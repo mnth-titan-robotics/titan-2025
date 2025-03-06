@@ -104,6 +104,8 @@ class DriveSubsystem(Subsystem):
       ySpeed=inputY,
       zRotation=inputRotation,
       gyroAngle=Rotation2d.fromDegrees(self._getGyroHeading())
+
+      #drift correction goes here
     )
 
   def drive(self, chassisSpeeds: ChassisSpeeds) -> None:
@@ -205,4 +207,5 @@ class DriveSubsystem(Subsystem):
   
   def _updateTelemetry(self) -> None:
     SmartDashboard.putBoolean("Robot/Drive/IsAlignedToTarget", self._isAlignedToTarget)
+    SmartDashboard.putNumber("Robot/Drive/Heading", self._getGyroHeading())
   
