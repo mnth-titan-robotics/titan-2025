@@ -15,6 +15,7 @@ import core.constants as constants
 import wpilib
 from wpimath import units
 from wpilib import ADIS16470_IMU as IMU
+import math
 
 class RobotCore:
   def __init__(self) -> None:
@@ -66,9 +67,9 @@ class RobotCore:
     )
     self.driverController.rightStick().whileTrue(self.gameCommands.alignRobotToTargetCommand(TargetAlignmentMode.Translation, TargetAlignmentLocation.Center))
     # self.driverController.leftStick().whileTrue(cmd.none())
-    self.driverController.rightTrigger().whileTrue(self.rollerSubsystem.ejectCommand())
+    #self.driverController.rightTrigger().whileTrue(self.rollerSubsystem.ejectCommand())
     # self.driverController.rightBumper().whileTrue(cmd.none())
-    self.driverController.leftTrigger().whileTrue(self.rollerSubsystem.reverseCommand())
+    #self.driverController.leftTrigger().whileTrue(self.rollerSubsystem.reverseCommand())
     # self.driverController.leftBumper().whileTrue(cmd.none())
     # self.driverController.povUp().whileTrue(cmd.none())
     # self.driverController.povDown().whileTrue(cmd.none())
@@ -81,9 +82,9 @@ class RobotCore:
     self.driverController.start().onTrue(self.gyroSensor.calibrateCommand())
     self.driverController.back().onTrue(self.gyroSensor.resetCommand())
 
-    # self.operatorController.rightTrigger().whileTrue(cmd.none())
+    self.operatorController.rightTrigger().whileTrue(self.rollerSubsystem.ejectCommand())
     # self.operatorController.rightBumper().whileTrue(cmd.none())
-    # self.operatorController.leftTrigger().whileTrue(cmd.none())
+    self.operatorController.leftTrigger().whileTrue(self.rollerSubsystem.reverseCommand())
     # self.operatorController.leftBumper().whileTrue(cmd.none())
     # self.operatorController.povUp().whileTrue(cmd.none())
     # self.operatorController.povDown().whileTrue(cmd.none())
@@ -100,7 +101,31 @@ class RobotCore:
     self._updateTelemetry()
 
   def getAutoCommand(self) -> Command:
-    return self.autoCommands.getSelected()
+    motor_speed = 0.25
+
+    return cmd.sequence(
+      self.driveSubsystem.driveCommand(
+        lambda: -(motor_speed),
+        lambda: 0.0,
+        lambda: 0.0
+      ).withTimeout(3.25),
+      self.driveSubsystem.driveCommand(
+        lambda: 0.0,
+        lambda: 0.0,
+        lambda: 0.0
+      ).withTimeout(0.1),
+      self.rollerSubsystem.auto_ejectCommand(1),
+      self.driveSubsystem.driveCommand(
+        lambda: (motor_speed),
+        lambda: 0.0,
+        lambda: 0.0
+      ).withTimeout(1),
+      self.driveSubsystem.driveCommand(
+        lambda: 0.0,
+        lambda: 0.0,
+        lambda: 0.0
+      ).withTimeout(0.1)
+    )
 
   def autoInit(self) -> None:
     self.resetRobot()

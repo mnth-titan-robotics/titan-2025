@@ -99,11 +99,18 @@ class DriveSubsystem(Subsystem):
     ).withName("DriveSubsystem:Drive")
 
   def _drive(self, inputX: float, inputY: float, inputRotation: float) -> None:
+    #RateLimit = 0.5
+    #SRL = SlewRateLimiter(rateLimit=RateLimit)
+
+    #inputRotation_Limited = SRL.calculate(inputRotation)
+    # Theoretically ^ this ^ should be input scaling
+    # This causes issues with rotation where it just doesn't so idk
+
     self._drivetrain.driveCartesian(
       xSpeed=inputX,
       ySpeed=inputY,
       zRotation=inputRotation,
-      gyroAngle=Rotation2d.fromDegrees(self._getGyroHeading())
+      gyroAngle=Rotation2d()  #.fromDegrees(self._getGyroHeading())
 
       #drift correction goes here
     )

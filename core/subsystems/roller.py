@@ -1,5 +1,6 @@
 from typing import Callable
 import math
+import time
 from commands2 import Subsystem, Command
 from wpilib import SmartDashboard, SendableChooser
 from wpilib.drive import DifferentialDrive
@@ -42,6 +43,15 @@ class RollerSubsystem(Subsystem):
       ).finallyDo(
         lambda cancel: self._motor.stopMotor()
       )
+  
+  # Auto Eject Command hopefully
+  def auto_ejectCommand(self, set_timeout) -> Command:
+    return self.run(
+      lambda: self._motor.set(constants.Subsystems.Roller.kEjectSpeed)
+    ).withTimeout(set_timeout
+    ).finallyDo(
+      lambda cancel: self._motor.stopMotor()
+    )
   
   def reverseCommand(self) -> Command:
     return self.run(
