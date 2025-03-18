@@ -16,8 +16,13 @@ import wpilib
 from wpimath import units
 from wpilib import ADIS16470_IMU as IMU
 import math
+## adds a simple camera server 
+from wpilib.cameraserver import CameraServer
 
 class RobotCore:
+  def robotInit(self):
+    CameraServer().launch().setResolution(160, 120) ## this is to add video to the robot and set resolution low
+    
   def __init__(self) -> None:
     self._initSensors()
     self._initSubsystems()
@@ -36,6 +41,8 @@ class RobotCore:
       initCalibrationTime=IMU.CalibrationTime._1s, 
       commandCalibrationTime= IMU.CalibrationTime._1s, 
       commandCalibrationDelay=1.0
+     ## change HERE!!
+   ## CameraServer().launch()
     )
     self.poseSensors = tuple(PoseSensor(c) for c in constants.Sensors.Pose.kPoseSensorConfigs)
     SmartDashboard.putString("Robot/Sensors/Camera/Streams", utils.toJson(constants.Sensors.Camera.kStreams))
@@ -45,7 +52,7 @@ class RobotCore:
     self.rollerSubsystem = RollerSubsystem()
     
   def _initServices(self) -> None:
-    pass
+    pass 
     # self.localizationService = LocalizationService(self.gyroSensor.getRotation, self.driveSubsystem.getModulePositions, self.poseSensors)
 
   def _initControllers(self) -> None:
@@ -102,30 +109,83 @@ class RobotCore:
 
   def getAutoCommand(self) -> Command:
     motor_speed = 0.25
+    motor_stop_time = 0.1
 
-    return cmd.sequence(
-      self.driveSubsystem.driveCommand(
-        lambda: -(motor_speed),
-        lambda: 0.0,
-        lambda: 0.0
-      ).withTimeout(3.25),
-      self.driveSubsystem.driveCommand(
-        lambda: 0.0,
-        lambda: 0.0,
-        lambda: 0.0
-      ).withTimeout(0.1),
-      self.rollerSubsystem.auto_ejectCommand(1),
-      self.driveSubsystem.driveCommand(
-        lambda: (motor_speed),
-        lambda: 0.0,
-        lambda: 0.0
-      ).withTimeout(1),
-      self.driveSubsystem.driveCommand(
-        lambda: 0.0,
-        lambda: 0.0,
-        lambda: 0.0
-      ).withTimeout(0.1)
-    )
+    mode_0_drive_time = 3.25
+    other_mode_step_1_drive_time = 1.85
+    other_mode_step_2_drive_time = 1.75
+
+    robot_turn_angle = 45.0
+
+    # Change the value of the "selected_mode" variable to change modes, then redeploy
+    selected_mode = "right"
+    """
+      # The allowed modes are "center", "left", "right"
+      # DO NOT CAPITALIZE ANY OF THE MODES
+      #
+      # The modes are assuming the robot is coming from the barge, driving towards the reef
+      # 
+      # "center" drives straight forward, into the reef, then dispensing the coral without turning
+      # "left" drives straight forward, turning right, towards the reef, 
+      #       then driving straight forward into the reef, then dispensing the coral
+      # "right" drives straight forward, turning left, towards the reef,
+      #       then driving straight forward into the reef, then dispensing the coral
+    """
+
+    selected_mode.lower()
+
+    if selected_mode == "center":
+      # This is for driving straight then dispensing the coral
+      return cmd.sequence(
+        self.driveSubsystem.driveCommand(
+          lambda: -(motor_speed),
+          lambda: 0.0,
+          lambda: 0.0
+        ).withTimeout(mode_0_drive_time),
+        self.driveSubsystem.driveCommand(
+          lambda: 0.0,
+          lambda: 0.0,
+          lambda: 0.0
+        ).withTimeout(motor_stop_time),
+        self.rollerSubsystem.auto_ejectCommand(1)
+      )
+    
+    elif selected_mode in ["left", "right"]:
+      # This is for driving straight, turning a certain direction, 
+      #     driving straight again before dispensing the coral
+      return cmd.sequence(
+        self.driveSubsystem.driveCommand( # Drive forward beside reef
+          lambda: -(motor_speed),
+          lambda: 0.0,
+          lambda: 0.0
+        ).withTimeout(other_mode_step_1_drive_time),
+        self.driveSubsystem.driveCommand( # Stop driving
+          lambda: 0.0,
+          lambda: 0.0,
+          lambda: 0.0
+        ).withTimeout(motor_stop_time),
+        self.driveSubsystem.driveCommand( # Turn to face reef
+          lambda: 0.0,
+          lambda: 0.0,    # The line below determines whether or not we are turning left or right
+          lambda: (robot_turn_angle) if selected_mode == "right" else -(robot_turn_angle) # One-liner for changing signs
+        ).withTimeout(0.2),
+        self.driveSubsystem.driveCommand( # Stop turning
+          lambda: 0.0,
+          lambda: 0.0,
+          lambda: 0.0
+        ).withTimeout(motor_stop_time),
+        self.driveSubsystem.driveCommand( # Drive forward to reef
+          lambda: -(motor_speed),
+          lambda: 0.0,
+          lambda: 0.0
+        ).withTimeout(other_mode_step_2_drive_time),
+        self.driveSubsystem.driveCommand( # Stop driving
+          lambda: 0.0,
+          lambda: 0.0,
+          lambda: 0.0
+        ).withTimeout(motor_stop_time),
+        self.rollerSubsystem.auto_ejectCommand(1)
+      )
 
   def autoInit(self) -> None:
     self.resetRobot()
