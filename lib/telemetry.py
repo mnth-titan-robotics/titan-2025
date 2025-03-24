@@ -8,7 +8,7 @@ def start() -> None:
   utils.addRobotPeriodic(_updateTelemetrySetting, 3.0, 0.75)
 
 def _updateTimingInfo() -> None:
-  SmartDashboard.putNumber("Robot/FPGATimestamp", Timer.getFPGATimestamp())
+  #SmartDashboard.putNumber("Robot/FPGATimestamp", Timer.getFPGATimestamp())
   SmartDashboard.putNumber("Robot/Game/MatchTime",  math.floor(DriverStation.getMatchTime()))
 
 def _updateRobotInfo() -> None:
@@ -17,11 +17,11 @@ def _updateRobotInfo() -> None:
   SmartDashboard.putString("Robot/Game/Alliance", utils.getAlliance().name)
   SmartDashboard.putNumber("Robot/Game/Team", RobotController.getTeamNumber())
   SmartDashboard.putNumber("Robot/Game/Station", DriverStation.getLocation() or 0)
-  SmartDashboard.putNumber("Robot/Power/Battery/Voltage", RobotController.getBatteryVoltage())
+  SmartDashboard.putNumber("Robot/Power/Battery/Voltage", (math.floor(RobotController.getBatteryVoltage()*100)/100))
 
 def _updateTelemetrySetting() -> None:
   if DriverStation.isFMSAttached():
-    SmartDashboard.putBoolean("Robot/IsAllTelemetryEnabled", False)
+    #SmartDashboard.putBoolean("Robot/IsAllTelemetryEnabled", False)
     if LiveWindow.isEnabled():
       LiveWindow.setEnabled(False)
   else:

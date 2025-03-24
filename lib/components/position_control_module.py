@@ -83,4 +83,5 @@ class PositionControlModule:
     self._motor.stopMotor()
 
   def _updateTelemetry(self) -> None:
-    SmartDashboard.putNumber(f'{self._baseKey}/Position', self._encoder.getPosition())
+    pass
+    #SmartDashboard.putNumber(f'{self._baseKey}/Position', self._encoder.getPosition())

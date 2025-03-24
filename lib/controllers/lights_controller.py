@@ -5,4 +5,4 @@ class LightsController:
     self.setLightsMode("Default")
 
   def setLightsMode(self, mode: str) -> None:
-    SmartDashboard.putString("Robot/Lights/Mode", mode)
+    pass#SmartDashboard.putString("Robot/Lights/Mode", mode)

@@ -59,31 +59,31 @@ class DriveSubsystem(Subsystem):
     speedModeChooser.setDefaultOption(SpeedMode.Competition.name, SpeedMode.Competition)
     speedModeChooser.addOption(SpeedMode.Demo.name, SpeedMode.Demo)
     speedModeChooser.onChange(lambda speedMode: setattr(self, "_speedMode", speedMode))
-    SmartDashboard.putData("Robot/Drive/SpeedMode", speedModeChooser)
+    #SmartDashboard.putData("Robot/Drive/SpeedMode", speedModeChooser)
 
     self._orientation: DriveOrientation = DriveOrientation.Field
     orientationChooser = SendableChooser()
     orientationChooser.setDefaultOption(DriveOrientation.Field.name, DriveOrientation.Field)
     orientationChooser.addOption(DriveOrientation.Robot.name, DriveOrientation.Robot)
     orientationChooser.onChange(lambda orientation: setattr(self, "_orientation", orientation))
-    SmartDashboard.putData("Robot/Drive/Orientation", orientationChooser)
+    #SmartDashboard.putData("Robot/Drive/Orientation", orientationChooser)
 
     self._driftCorrection: OptionState = OptionState.Enabled
     driftCorrectionChooser = SendableChooser()
     driftCorrectionChooser.setDefaultOption(OptionState.Enabled.name, OptionState.Enabled)
     driftCorrectionChooser.addOption(OptionState.Disabled.name, OptionState.Disabled)
     driftCorrectionChooser.onChange(lambda driftCorrection: setattr(self, "_driftCorrection", driftCorrection))
-    SmartDashboard.putData("Robot/Drive/DriftCorrection", driftCorrectionChooser)
+    #SmartDashboard.putData("Robot/Drive/DriftCorrection", driftCorrectionChooser)
 
     idleModeChooser = SendableChooser()
     idleModeChooser.setDefaultOption(MotorIdleMode.Brake.name, MotorIdleMode.Brake)
     idleModeChooser.addOption(MotorIdleMode.Coast.name, MotorIdleMode.Coast)
     idleModeChooser.onChange(lambda idleMode: self._setIdleMode(idleMode))
-    SmartDashboard.putData("Robot/Drive/IdleMode", idleModeChooser)
+    #SmartDashboard.putData("Robot/Drive/IdleMode", idleModeChooser)
 
-    SmartDashboard.putNumber("Robot/Drive/Chassis/Length", self._constants.kWheelBase)
-    SmartDashboard.putNumber("Robot/Drive/Chassis/Width", self._constants.kTrackWidth)
-    SmartDashboard.putNumber("Robot/Drive/Speed/Max", self._constants.kTranslationSpeedMax)
+    #SmartDashboard.putNumber("Robot/Drive/Chassis/Length", self._constants.kWheelBase)
+    #SmartDashboard.putNumber("Robot/Drive/Chassis/Width", self._constants.kTrackWidth)
+    #SmartDashboard.putNumber("Robot/Drive/Speed/Max", self._constants.kTranslationSpeedMax)
 
   def periodic(self) -> None:
     self._updateTelemetry()
@@ -137,7 +137,8 @@ class DriveSubsystem(Subsystem):
 
   def _setIdleMode(self, idleMode: MotorIdleMode) -> None:
     # TODO: implement idleMode change on motor controllers
-    SmartDashboard.putString("Robot/Drive/IdleMode/selected", idleMode.name)
+    #SmartDashboard.putString("Robot/Drive/IdleMode/selected", idleMode.name)
+    pass
 
   def alignToTargetCommand(
       self, 
@@ -213,6 +214,7 @@ class DriveSubsystem(Subsystem):
     self.clearTargetAlignment()
   
   def _updateTelemetry(self) -> None:
-    SmartDashboard.putBoolean("Robot/Drive/IsAlignedToTarget", self._isAlignedToTarget)
-    SmartDashboard.putNumber("Robot/Drive/Heading", self._getGyroHeading())
+    #SmartDashboard.putBoolean("Robot/Drive/IsAlignedToTarget", self._isAlignedToTarget)
+    #SmartDashboard.putNumber("Robot/Drive/Heading", self._getGyroHeading())
+    pass
   

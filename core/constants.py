@@ -72,6 +72,11 @@ class Subsystems:
     kEjectSpeed: float = 1.0
     kReverseSpeed: float = -1.0
 
+  class Climber:
+    kMotorCanId: int = 14
+    kClimbSpeed: float = 1.0
+    kReverseSpeed: float = -1.0
+
 class Services:
   class Localization:
     kStateStandardDeviations: tuple[float, float, float] = (0.05, 0.05, units.degreesToRadians(5))

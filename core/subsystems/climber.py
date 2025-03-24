@@ -17,13 +17,13 @@ import core.constants as constants
 import rev
 from ntcore import NetworkTableInstance
 
-class RollerSubsystem(Subsystem):
+class ClimberSubsystem(Subsystem):
   def __init__(self):
-    self._motor = rev.SparkMax(constants.Subsystems.Roller.kMotorCanId, rev.SparkBase.MotorType.kBrushless)
+    self._motor = rev.SparkMax(constants.Subsystems.Climber.kMotorCanId, rev.SparkBase.MotorType.kBrushless)
     config = rev.SparkMaxConfig().inverted(True).smartCurrentLimit(20)
     self._motor.configure(config, rev.SparkBase.ResetMode.kResetSafeParameters, rev.SparkBase.PersistMode.kPersistParameters)
-    self._publisher = NetworkTableInstance.getDefault().getFloatTopic("Subsystem/Roller/Speed").publish()
-    self._currentPublisher = NetworkTableInstance.getDefault().getFloatTopic("Subsystem/Roller/Current").publish()
+    self._publisher = NetworkTableInstance.getDefault().getFloatTopic("Subsystem/climber/Speed").publish()
+    self._currentPublisher = NetworkTableInstance.getDefault().getFloatTopic("Subsystem/climber/Current").publish()
 
   def periodic(self) -> None:
     self._updateTelemetry()
@@ -37,17 +37,17 @@ class RollerSubsystem(Subsystem):
 # def ejectCommand(self) -> Command:
     #return self.runOnce(lambda: self._motor.set(constants.Subsystems.Roller.kEjectSpeed)).finallyDo(lambda cancel: self._motor.set(0.0))
 
-  def ejectCommand(self) -> Command:
+  def climbCommand(self) -> Command:
     return self.run(
-        lambda: self._motor.set(constants.Subsystems.Roller.kEjectSpeed)
+        lambda: self._motor.set(constants.Subsystems.Climber.kClimbSpeed)
       ).finallyDo(
         lambda cancel: self._motor.stopMotor()
       )
   
   # Auto Eject Command hopefully
-  def auto_ejectCommand(self, set_timeout) -> Command:
+  def auto_climbCommand(self, set_timeout) -> Command:
     return self.run(
-      lambda: self._motor.set(constants.Subsystems.Roller.kEjectSpeed)
+      lambda: self._motor.set(constants.Subsystems.Climber.kClimbSpeed)
     ).withTimeout(set_timeout
     ).finallyDo(
       lambda cancel: self._motor.stopMotor()
@@ -55,7 +55,7 @@ class RollerSubsystem(Subsystem):
   
   def reverseCommand(self) -> Command:
     return self.run(
-        lambda: self._motor.set(constants.Subsystems.Roller.kReverseSpeed)
+        lambda: self._motor.set(constants.Subsystems.Climber.kReverseSpeed)
       ).finallyDo(
         lambda cancel: self._motor.stopMotor()
       )

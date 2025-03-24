@@ -1,11 +1,12 @@
 [tool.robotpy]
-robotpy_version = "2025.3.1.1"
+robotpy_version = "2025.3.2.0"
 robotpy_extras = [
   "commands2",
   "navx",
   "pathplannerlib",
   "rev",
-  "sim"
+  "sim",
+  "cscore"
 ]
 requires = [
   "photonlibpy",

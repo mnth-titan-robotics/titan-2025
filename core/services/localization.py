@@ -37,8 +37,8 @@ class LocalizationService():
     self._targets: dict[int, Target] = {}
     self._targetPoses: list[Pose2d] = []
 
-    SmartDashboard.putNumber("Robot/Game/Field/Length", constants.Game.Field.kLength)
-    SmartDashboard.putNumber("Robot/Game/Field/Width", constants.Game.Field.kWidth)
+    #SmartDashboard.putNumber("Robot/Game/Field/Length", constants.Game.Field.kLength)
+    #SmartDashboard.putNumber("Robot/Game/Field/Width", constants.Game.Field.kWidth)
 
   def _periodic(self) -> None:
     self._updateRobotPose()
@@ -85,4 +85,5 @@ class LocalizationService():
     return False
 
   def _updateTelemetry(self) -> None:
-    SmartDashboard.putNumberArray("Robot/Localization/Pose", [self._robotPose.X(), self._robotPose.Y(), self._robotPose.rotation().degrees()])
+    pass
+    #SmartDashboard.putNumberArray("Robot/Localization/Pose", [self._robotPose.X(), self._robotPose.Y(), self._robotPose.rotation().degrees()])

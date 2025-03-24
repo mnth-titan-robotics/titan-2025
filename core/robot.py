@@ -9,6 +9,7 @@ from core.commands.auto import AutoCommands
 from core.commands.game import GameCommands
 from core.subsystems.drive import DriveSubsystem
 from core.subsystems.roller import RollerSubsystem
+from core.subsystems.climber import ClimberSubsystem
 from core.services.localization import LocalizationService
 from core.classes import TargetAlignmentLocation, TargetType
 import core.constants as constants
@@ -16,14 +17,17 @@ import wpilib
 from wpimath import units
 from wpilib import ADIS16470_IMU as IMU
 import math
+#from cscore import CameraServer
 ## adds a simple camera server 
 from wpilib.cameraserver import CameraServer
 
-class RobotCore:
+class RobotCore(wpilib.TimedRobot):
   def robotInit(self):
-    CameraServer().launch().setResolution(160, 120) ## this is to add video to the robot and set resolution low
-    
+   pass
+
   def __init__(self) -> None:
+    super().__init__()
+
     self._initSensors()
     self._initSubsystems()
     self._initServices()
@@ -31,6 +35,13 @@ class RobotCore:
     self._initCommands()
     self._initTriggers()
     utils.addRobotPeriodic(self._periodic)
+
+    #CameraServer.enableLogging()
+    #self.camera = CameraServer.startAutomaticCapture()
+    #self.camera.setResolution(160, 160)
+    #self.camera.setFPS(60)
+    #self.camera_output = CameraServer.putVideo("Driver_Camera", 160, 160)
+
 
   def _initSensors(self) -> None:
     self.gyroSensor = GyroSensor_ADIS16470(
@@ -41,15 +52,15 @@ class RobotCore:
       initCalibrationTime=IMU.CalibrationTime._1s, 
       commandCalibrationTime= IMU.CalibrationTime._1s, 
       commandCalibrationDelay=1.0
-     ## change HERE!!
-   ## CameraServer().launch()
     )
+
     self.poseSensors = tuple(PoseSensor(c) for c in constants.Sensors.Pose.kPoseSensorConfigs)
-    SmartDashboard.putString("Robot/Sensors/Camera/Streams", utils.toJson(constants.Sensors.Camera.kStreams))
+    #SmartDashboard.putString("Robot/Sensors/Camera/Streams", utils.toJson(constants.Sensors.Camera.kStreams))
     
   def _initSubsystems(self) -> None:
     self.driveSubsystem = DriveSubsystem(self.gyroSensor.getHeading)
     self.rollerSubsystem = RollerSubsystem()
+    self.climberSubsystem = ClimberSubsystem()
     
   def _initServices(self) -> None:
     pass 
@@ -90,9 +101,9 @@ class RobotCore:
     self.driverController.back().onTrue(self.gyroSensor.resetCommand())
 
     self.operatorController.rightTrigger().whileTrue(self.rollerSubsystem.ejectCommand())
-    # self.operatorController.rightBumper().whileTrue(cmd.none())
+    self.operatorController.rightBumper().whileTrue(self.climberSubsystem.climbCommand())
     self.operatorController.leftTrigger().whileTrue(self.rollerSubsystem.reverseCommand())
-    # self.operatorController.leftBumper().whileTrue(cmd.none())
+    self.operatorController.leftBumper().whileTrue(self.climberSubsystem.reverseCommand())
     # self.operatorController.povUp().whileTrue(cmd.none())
     # self.operatorController.povDown().whileTrue(cmd.none())
     # self.operatorController.povLeft().whileTrue(cmd.none())
@@ -106,6 +117,7 @@ class RobotCore:
 
   def _periodic(self) -> None:
     self._updateTelemetry()
+    #CameraServer.putVideo("Driver_Camera", 160, 160)
 
   def getAutoCommand(self) -> Command:
     motor_speed = 0.25
@@ -207,4 +219,5 @@ class RobotCore:
     return utils.isCompetitionMode() or True
 
   def _updateTelemetry(self) -> None:
-    SmartDashboard.putBoolean("Robot/HasInitialZeroResets", self._robotHasInitialZeroResets())
+    pass
+    #SmartDashboard.putBoolean("Robot/HasInitialZeroResets", self._robotHasInitialZeroResets())

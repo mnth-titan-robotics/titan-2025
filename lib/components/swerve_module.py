@@ -101,6 +101,7 @@ class SwerveModule:
     utils.setSparkConfig(self._turningMotor.configure(SparkBaseConfig().setIdleMode(idleMode), SparkBase.ResetMode.kNoResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters))
     
   def _updateTelemetry(self) -> None:
-    SmartDashboard.putNumber(f'{self._baseKey}/Driving/Speed/Target', self._drivingTargetSpeed)
-    SmartDashboard.putNumber(f'{self._baseKey}/Driving/Speed/Actual', self._drivingEncoder.getVelocity())
-    SmartDashboard.putNumber(f'{self._baseKey}/Turning/Position', self._turningEncoder.getPosition())
+    pass
+    #SmartDashboard.putNumber(f'{self._baseKey}/Driving/Speed/Target', self._drivingTargetSpeed)
+    #SmartDashboard.putNumber(f'{self._baseKey}/Driving/Speed/Actual', self._drivingEncoder.getVelocity())
+    #SmartDashboard.putNumber(f'{self._baseKey}/Turning/Position', self._turningEncoder.getPosition())

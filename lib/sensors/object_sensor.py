@@ -54,6 +54,7 @@ class ObjectSensor:
     return self._hasTarget
 
   def _updateTelemetry(self) -> None:
-    SmartDashboard.putBoolean(f'{self._baseKey}/IsConnected', self._photonCamera.isConnected())
-    SmartDashboard.putBoolean(f'{self._baseKey}/HasTarget', self.hasTarget())
-    SmartDashboard.putString(f'{self._baseKey}/Transform', utils.toJson(self.getObjectTransform()))
+    pass
+    #SmartDashboard.putBoolean(f'{self._baseKey}/IsConnected', self._photonCamera.isConnected())
+    #SmartDashboard.putBoolean(f'{self._baseKey}/HasTarget', self.hasTarget())
+    #SmartDashboard.putString(f'{self._baseKey}/Transform', utils.toJson(self.getObjectTransform()))

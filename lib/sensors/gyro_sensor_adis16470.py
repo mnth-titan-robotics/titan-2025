@@ -66,7 +66,7 @@ class GyroSensor_ADIS16470():
     return cmd.sequence(
       cmd.runOnce(
         lambda: [
-          SmartDashboard.putBoolean(f'{self._baseKey}/IsCalibrating', True),
+          #SmartDashboard.putBoolean(f'{self._baseKey}/IsCalibrating', True),
           self._calibrate()
         ]
       ),
@@ -77,7 +77,8 @@ class GyroSensor_ADIS16470():
     ).ignoringDisable(True).withName("GyroSensor:Calibrate")
   
   def _updateTelemetry(self) -> None:
-    SmartDashboard.putNumber(f'{self._baseKey}/Heading', self.getHeading())
-    SmartDashboard.putNumber(f'{self._baseKey}/Pitch', self.getPitch())
-    SmartDashboard.putNumber(f'{self._baseKey}/Roll', self.getRoll())
-    SmartDashboard.putNumber(f'{self._baseKey}/TurnRate', self.getTurnRate())
+    pass
+    #SmartDashboard.putNumber(f'{self._baseKey}/Heading', self.getHeading())
+    #SmartDashboard.putNumber(f'{self._baseKey}/Pitch', self.getPitch())
+    #SmartDashboard.putNumber(f'{self._baseKey}/Roll', self.getRoll())
+    #SmartDashboard.putNumber(f'{self._baseKey}/TurnRate', self.getTurnRate())

@@ -48,5 +48,6 @@ class PoseSensor:
     return self._hasTarget
   
   def _updateTelemetry(self) -> None:
-    SmartDashboard.putBoolean(f'{self._baseKey}/IsConnected', self._photonCamera.isConnected())
-    SmartDashboard.putBoolean(f'{self._baseKey}/HasTarget', self.hasTarget())
+    pass
+    #SmartDashboard.putBoolean(f'{self._baseKey}/IsConnected', self._photonCamera.isConnected())
+    #SmartDashboard.putBoolean(f'{self._baseKey}/HasTarget', self.hasTarget())
