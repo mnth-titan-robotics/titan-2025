@@ -6,9 +6,11 @@ robotpy_extras = [
   "pathplannerlib",
   "rev",
   "sim",
-  "cscore"
+  "cscore",
+  "pynetworktables"
 ]
 requires = [
   "photonlibpy",
-  "numpy"
+  "numpy",
+  "pynetworktables"
 ]

@@ -1,5 +1,5 @@
 from commands2 import Command, cmd
-from wpilib import DriverStation, SmartDashboard, SPI
+from wpilib import DriverStation, SmartDashboard, SPI, SendableChooser
 from lib import logger, utils
 from lib.classes import TargetAlignmentMode
 from lib.controllers.game_controller import GameController
@@ -10,12 +10,14 @@ from core.commands.game import GameCommands
 from core.subsystems.drive import DriveSubsystem
 from core.subsystems.roller import RollerSubsystem
 from core.subsystems.climber import ClimberSubsystem
+from core.subsystems.algae_remover import AlgaeRemoverSubsystem
 from core.services.localization import LocalizationService
 from core.classes import TargetAlignmentLocation, TargetType
-import core.constants as constants
-import wpilib
 from wpimath import units
 from wpilib import ADIS16470_IMU as IMU
+from networktables import NetworkTables
+import core.constants as constants
+import wpilib
 import math
 #from cscore import CameraServer
 ## adds a simple camera server 
@@ -36,12 +38,9 @@ class RobotCore(wpilib.TimedRobot):
     self._initTriggers()
     utils.addRobotPeriodic(self._periodic)
 
-    #CameraServer.enableLogging()
-    #self.camera = CameraServer.startAutomaticCapture()
-    #self.camera.setResolution(160, 160)
-    #self.camera.setFPS(60)
-    #self.camera_output = CameraServer.putVideo("Driver_Camera", 160, 160)
-
+    # Setup Limelight & Related Variables
+    # I stole this from Team Phoenix (FRC 703)
+    #self._NetworkTable = NetworkTables.getTable("limelight")
 
   def _initSensors(self) -> None:
     self.gyroSensor = GyroSensor_ADIS16470(
@@ -55,12 +54,12 @@ class RobotCore(wpilib.TimedRobot):
     )
 
     self.poseSensors = tuple(PoseSensor(c) for c in constants.Sensors.Pose.kPoseSensorConfigs)
-    #SmartDashboard.putString("Robot/Sensors/Camera/Streams", utils.toJson(constants.Sensors.Camera.kStreams))
     
   def _initSubsystems(self) -> None:
     self.driveSubsystem = DriveSubsystem(self.gyroSensor.getHeading)
     self.rollerSubsystem = RollerSubsystem()
     self.climberSubsystem = ClimberSubsystem()
+    self.AlgaeRemoverSubsystem = AlgaeRemoverSubsystem()
     
   def _initServices(self) -> None:
     pass 
@@ -83,121 +82,27 @@ class RobotCore(wpilib.TimedRobot):
         self.driverController.getRightX
       )
     )
+
+    # Driver Controller Binds
+
     self.driverController.rightStick().whileTrue(self.gameCommands.alignRobotToTargetCommand(TargetAlignmentMode.Translation, TargetAlignmentLocation.Center))
-    # self.driverController.leftStick().whileTrue(cmd.none())
-    #self.driverController.rightTrigger().whileTrue(self.rollerSubsystem.ejectCommand())
-    # self.driverController.rightBumper().whileTrue(cmd.none())
-    #self.driverController.leftTrigger().whileTrue(self.rollerSubsystem.reverseCommand())
-    # self.driverController.leftBumper().whileTrue(cmd.none())
-    # self.driverController.povUp().whileTrue(cmd.none())
-    # self.driverController.povDown().whileTrue(cmd.none())
-    # self.driverController.povLeft().whileTrue(cmd.none())
-    # self.driverController.povRight().whileTrue(cmd.none())
-    # self.driverController.a().whileTrue(cmd.none())
-    # self.driverController.b().whileTrue(cmd.none())
-    # self.driverController.y().whileTrue(cmd.none())
-    # self.driverController.x().whileTrue(cmd.none())
     self.driverController.start().onTrue(self.gyroSensor.calibrateCommand())
     self.driverController.back().onTrue(self.gyroSensor.resetCommand())
+
+    # Operator Controller Binds
 
     self.operatorController.rightTrigger().whileTrue(self.rollerSubsystem.ejectCommand())
     self.operatorController.rightBumper().whileTrue(self.climberSubsystem.climbCommand())
     self.operatorController.leftTrigger().whileTrue(self.rollerSubsystem.reverseCommand())
     self.operatorController.leftBumper().whileTrue(self.climberSubsystem.reverseCommand())
-    # self.operatorController.povUp().whileTrue(cmd.none())
-    # self.operatorController.povDown().whileTrue(cmd.none())
-    # self.operatorController.povLeft().whileTrue(cmd.none())
-    # self.operatorController.povRight().whileTrue(cmd.none())
-    # self.operatorController.a().whileTrue(cmd.none())
-    # self.operatorController.b().whileTrue(cmd.none())
-    # self.operatorController.y().whileTrue(cmd.none())
-    # self.operatorController.x().whileTrue(cmd.none())
-    # self.operatorController.start().whileTrue(cmd.none())
-    # self.operatorController.back().whileTrue(cmd.none())
+    self.operatorController.a().whileTrue(self.AlgaeRemoverSubsystem.extendCommand())
+    self.operatorController.b().whileTrue(self.AlgaeRemoverSubsystem.retractCommand())
 
   def _periodic(self) -> None:
     self._updateTelemetry()
-    #CameraServer.putVideo("Driver_Camera", 160, 160)
 
   def getAutoCommand(self) -> Command:
-    motor_speed = 0.25
-    motor_stop_time = 0.1
-
-    mode_0_drive_time = 3.25
-    other_mode_step_1_drive_time = 1.85
-    other_mode_step_2_drive_time = 1.75
-
-    robot_turn_angle = 45.0
-
-    # Change the value of the "selected_mode" variable to change modes, then redeploy
-    selected_mode = "right"
-    """
-      # The allowed modes are "center", "left", "right"
-      # DO NOT CAPITALIZE ANY OF THE MODES
-      #
-      # The modes are assuming the robot is coming from the barge, driving towards the reef
-      # 
-      # "center" drives straight forward, into the reef, then dispensing the coral without turning
-      # "left" drives straight forward, turning right, towards the reef, 
-      #       then driving straight forward into the reef, then dispensing the coral
-      # "right" drives straight forward, turning left, towards the reef,
-      #       then driving straight forward into the reef, then dispensing the coral
-    """
-
-    selected_mode.lower()
-
-    if selected_mode == "center":
-      # This is for driving straight then dispensing the coral
-      return cmd.sequence(
-        self.driveSubsystem.driveCommand(
-          lambda: -(motor_speed),
-          lambda: 0.0,
-          lambda: 0.0
-        ).withTimeout(mode_0_drive_time),
-        self.driveSubsystem.driveCommand(
-          lambda: 0.0,
-          lambda: 0.0,
-          lambda: 0.0
-        ).withTimeout(motor_stop_time),
-        self.rollerSubsystem.auto_ejectCommand(1)
-      )
-    
-    elif selected_mode in ["left", "right"]:
-      # This is for driving straight, turning a certain direction, 
-      #     driving straight again before dispensing the coral
-      return cmd.sequence(
-        self.driveSubsystem.driveCommand( # Drive forward beside reef
-          lambda: -(motor_speed),
-          lambda: 0.0,
-          lambda: 0.0
-        ).withTimeout(other_mode_step_1_drive_time),
-        self.driveSubsystem.driveCommand( # Stop driving
-          lambda: 0.0,
-          lambda: 0.0,
-          lambda: 0.0
-        ).withTimeout(motor_stop_time),
-        self.driveSubsystem.driveCommand( # Turn to face reef
-          lambda: 0.0,
-          lambda: 0.0,    # The line below determines whether or not we are turning left or right
-          lambda: (robot_turn_angle) if selected_mode == "right" else -(robot_turn_angle) # One-liner for changing signs
-        ).withTimeout(0.2),
-        self.driveSubsystem.driveCommand( # Stop turning
-          lambda: 0.0,
-          lambda: 0.0,
-          lambda: 0.0
-        ).withTimeout(motor_stop_time),
-        self.driveSubsystem.driveCommand( # Drive forward to reef
-          lambda: -(motor_speed),
-          lambda: 0.0,
-          lambda: 0.0
-        ).withTimeout(other_mode_step_2_drive_time),
-        self.driveSubsystem.driveCommand( # Stop driving
-          lambda: 0.0,
-          lambda: 0.0,
-          lambda: 0.0
-        ).withTimeout(motor_stop_time),
-        self.rollerSubsystem.auto_ejectCommand(1)
-      )
+    return self.autoCommands.getSelected()
 
   def autoInit(self) -> None:
     self.resetRobot()

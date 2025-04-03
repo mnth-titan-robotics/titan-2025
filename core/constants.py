@@ -72,6 +72,11 @@ class Subsystems:
     kEjectSpeed: float = 1.0
     kReverseSpeed: float = -1.0
 
+  class AlgaeRemover:
+    kMotorCanId: int = 16
+    kRotationSpeed: float = 0.5
+    kReverseRotationSpeed: float = -0.5
+
   class Climber:
     kMotorCanId: int = 14
     kClimbSpeed: float = 1.0
