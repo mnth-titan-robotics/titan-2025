@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING
 from commands2 import Command, cmd
 from wpilib import RobotBase
-from lib import logger, utils
+from lib import utils
 from lib.classes import ControllerRumbleMode, ControllerRumblePattern, TargetAlignmentMode
-if TYPE_CHECKING: from core.robot import RobotCore
 from core.classes import TargetAlignmentLocation, TargetType
-import core.constants as constants
+if TYPE_CHECKING: from core.robot import RobotCore
+
 
 class GameCommands:
   def __init__(

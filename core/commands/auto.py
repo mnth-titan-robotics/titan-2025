@@ -2,19 +2,15 @@ from typing import TYPE_CHECKING
 from enum import Enum, auto
 from commands2 import Command, cmd
 from wpilib import SendableChooser, SmartDashboard
-import wpilib
 from wpimath.geometry import Transform2d
 from pathplannerlib.auto import AutoBuilder
 from pathplannerlib.path import PathPlannerPath
-from lib import logger, utils
-from lib.classes import Alliance, TargetAlignmentMode
-from lib.sensors.gyro_sensor_adis16470 import GyroSensor_ADIS16470
-if TYPE_CHECKING: from core.robot import RobotCore
+from lib.classes import TargetAlignmentMode
 from core.classes import TargetAlignmentLocation
+
+if TYPE_CHECKING: from core.robot import RobotCore
 import core.constants as constants
-from core.subsystems.drive import DriveSubsystem
-from core.subsystems.roller import RollerSubsystem
-from wpilib import ADIS16470_IMU as IMU
+
 
 class AutoPath(Enum):
   Move1 = auto()
@@ -27,17 +23,6 @@ class AutoCommands:
     self._robot = robot
 
     self._paths = { path: PathPlannerPath.fromPathFile(path.name) for path in AutoPath }
-
-    # AutoBuilder.configure(
-    #   self._robot.localizationService.getRobotPose, 
-    #   self._robot.localizationService.resetRobotPose, 
-    #   self._robot.driveSubsystem.getChassisSpeeds, 
-    #   self._robot.driveSubsystem.drive, 
-    #   constants.Subsystems.Drive.kPathPlannerController,
-    #   constants.Subsystems.Drive.kPathPlannerRobotConfig,
-    #   lambda: utils.getAlliance() == Alliance.Red,
-    #   self._robot.driveSubsystem
-    # )
 
     self._autoCommandChooser = SendableChooser()
     self._autoCommandChooser.setDefaultOption("None", cmd.none)

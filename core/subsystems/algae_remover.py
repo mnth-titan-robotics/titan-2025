@@ -1,18 +1,6 @@
 from commands2 import Subsystem, Command
-from wpilib import SmartDashboard, SendableChooser
-from wpilib.drive import DifferentialDrive
-from wpimath import units
-from wpimath.controller import PIDController
-from wpimath.filter import SlewRateLimiter
-from wpimath.geometry import Rotation2d, Pose2d, Pose3d
-from wpimath.kinematics import ChassisSpeeds, DifferentialDriveWheelSpeeds
-from lib import utils, logger
-from lib.classes import DifferentialModuleLocation, DifferentialDriveModulePositions, MotorIdleMode, SpeedMode, DriveOrientation, OptionState, TargetAlignmentMode
-from lib.components.differential_module import DifferentialModule
-from core.classes import TargetAlignmentLocation, TargetType
 import core.constants as constants
 import rev
-import time
 
 
 class AlgaeRemoverSubsystem(Subsystem):
@@ -45,6 +33,7 @@ class AlgaeRemoverSubsystem(Subsystem):
     
     # Are you guys not expecting to be able to remove algae while driving
     # Can't use pygame anyway because 1. you don't have it installed and 2. it's stupid considering the other code we have
+    # I rewrote the code bc the other main programmer depends on ChatGPT to write code
     
     def retractCommand(self) -> Command:
         return self.run(

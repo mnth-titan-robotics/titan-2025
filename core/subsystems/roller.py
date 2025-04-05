@@ -1,21 +1,8 @@
-from typing import Callable
-import math
-import time
 from commands2 import Subsystem, Command
-from wpilib import SmartDashboard, SendableChooser
-from wpilib.drive import DifferentialDrive
-from wpimath import units
-from wpimath.controller import PIDController
-from wpimath.filter import SlewRateLimiter
-from wpimath.geometry import Rotation2d, Pose2d, Pose3d
-from wpimath.kinematics import ChassisSpeeds, DifferentialDriveWheelSpeeds
-from lib import utils, logger
-from lib.classes import DifferentialModuleLocation, DifferentialDriveModulePositions, MotorIdleMode, SpeedMode, DriveOrientation, OptionState, TargetAlignmentMode
-from lib.components.differential_module import DifferentialModule
-from core.classes import TargetAlignmentLocation, TargetType
+from ntcore import NetworkTableInstance
 import core.constants as constants
 import rev
-from ntcore import NetworkTableInstance
+
 
 class RollerSubsystem(Subsystem):
   def __init__(self):

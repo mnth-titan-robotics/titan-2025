@@ -6,7 +6,6 @@ robotpy_extras = [
   "pathplannerlib",
   "rev",
   "sim",
-  "cscore",
   "pynetworktables"
 ]
 requires = [

@@ -1,13 +1,10 @@
 from typing import Callable
-import math
-from wpilib import SmartDashboard
-from wpimath import units
 from wpimath.geometry import Rotation2d, Pose2d, Pose3d
 from wpimath.estimator import DifferentialDrivePoseEstimator
 from photonlibpy.photonPoseEstimator import PoseStrategy
 from lib.sensors.pose_sensor import PoseSensor
 from lib.classes import DifferentialDriveModulePositions
-from lib import logger, utils
+from lib import utils
 from core.classes import Target, TargetAlignmentLocation, TargetType
 import core.constants as constants
 
@@ -36,9 +33,6 @@ class LocalizationService():
     self._robotPose = Pose2d()
     self._targets: dict[int, Target] = {}
     self._targetPoses: list[Pose2d] = []
-
-    #SmartDashboard.putNumber("Robot/Game/Field/Length", constants.Game.Field.kLength)
-    #SmartDashboard.putNumber("Robot/Game/Field/Width", constants.Game.Field.kWidth)
 
   def _periodic(self) -> None:
     self._updateRobotPose()
@@ -86,4 +80,4 @@ class LocalizationService():
 
   def _updateTelemetry(self) -> None:
     pass
-    #SmartDashboard.putNumberArray("Robot/Localization/Pose", [self._robotPose.X(), self._robotPose.Y(), self._robotPose.rotation().degrees()])
+    

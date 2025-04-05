@@ -1,14 +1,13 @@
 from typing import Callable
-import math
 from commands2 import Subsystem, Command
-from wpilib import SmartDashboard, SendableChooser
+from wpilib import SendableChooser
 from wpilib.drive import MecanumDrive
 from wpimath import units
 from wpimath.controller import PIDController
 from wpimath.filter import SlewRateLimiter
 from wpimath.geometry import Rotation2d, Pose2d, Pose3d
 from wpimath.kinematics import ChassisSpeeds, DifferentialDriveWheelSpeeds
-from lib import utils, logger
+from lib import utils
 from lib.classes import DifferentialModuleLocation, DifferentialDriveModulePositions, MotorIdleMode, SpeedMode, DriveOrientation, OptionState, TargetAlignmentMode
 from lib.components.differential_module import DifferentialModule
 from core.classes import TargetAlignmentLocation, TargetType
@@ -214,7 +213,5 @@ class DriveSubsystem(Subsystem):
     self.clearTargetAlignment()
   
   def _updateTelemetry(self) -> None:
-    #SmartDashboard.putBoolean("Robot/Drive/IsAlignedToTarget", self._isAlignedToTarget)
-    #SmartDashboard.putNumber("Robot/Drive/Heading", self._getGyroHeading())
     pass
   
