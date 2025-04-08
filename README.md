@@ -1,4 +1,4 @@
-# Robot-Base-Tank
+# Titan-2025
 
 [![PyFRC Tests](https://github.com/frc2881/Robot-Base-Tank/actions/workflows/python-app.yml/badge.svg?branch=main)](https://github.com/frc2881/Robot-Base-Tank/actions/workflows/python-app.yml)
 

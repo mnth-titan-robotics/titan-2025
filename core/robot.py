@@ -33,8 +33,6 @@ class RobotCore(wpilib.TimedRobot):
     self._initTriggers()
     utils.addRobotPeriodic(self._periodic)
 
-    self._alignToApriltagToggle = False
-
   def _initSensors(self) -> None:
     self.gyroSensor = GyroSensor_ADIS16470(
       wpilib.SPI.Port.kMXP, 
@@ -92,9 +90,11 @@ class RobotCore(wpilib.TimedRobot):
     self.operatorController.leftBumper().whileTrue(self.climberSubsystem.reverseCommand())
     self.operatorController.a().whileTrue(self.AlgaeRemoverSubsystem.extendCommand())
     self.operatorController.b().whileTrue(self.AlgaeRemoverSubsystem.retractCommand())
-    self._alignToApriltagToggle = self.operatorController.x().getAsBoolean()
+
+    print("Bound Controller Buttons to Their Actions")
 
   def _periodic(self) -> None:
+    self.teleopPeriodic()
     self._updateTelemetry()
 
   def getAutoCommand(self) -> Command:
@@ -110,7 +110,11 @@ class RobotCore(wpilib.TimedRobot):
   def teleopInit(self) -> None:
     self.resetRobot()
   
-  def teleopPeriodic(self) -> None:
+  def teleopPeriodic(self):
+    if not self.operatorController.y().getAsBoolean():
+      print("Not Running TeleopPeriodic Code")
+      return
+
     self.rollerSubsystem.auto_ejectCommand(0.25)
 
     # We stole this from photonvision docs "Aiming at Target"
@@ -132,14 +136,14 @@ class RobotCore(wpilib.TimedRobot):
                 targetYaw = target.getYaw()
                 print(f"Found AprilTag {target.getFiducialId()}")
 
-    if self._alignToApriltagToggle and targetVisible:
+    if self.operatorController.x().getAsBoolean() and targetVisible:
         # Driver wants auto-alignment to tag 7
         # And, tag 7 is in sight, so we can turn toward it.
         # Override the driver's turn command with an automatic one that turns toward the tag.
+        print("Rotating to Face AprilTag")
         rot = -1.0 * targetYaw * (0.25) * constants.Subsystems.Drive.kRotationSpeedMax
 
     self.driveSubsystem._drive(xSpeed, ySpeed, rot)
-    print("Attempted to Drive")
 
   def testInit(self) -> None:
     self.resetRobot()
