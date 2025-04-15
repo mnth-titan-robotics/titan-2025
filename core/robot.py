@@ -9,6 +9,7 @@ from core.commands.auto import AutoCommands
 from core.commands.game import GameCommands
 from core.subsystems.drive import DriveSubsystem
 from core.subsystems.roller import RollerSubsystem
+from core.subsystems.Baby_Roller import Baby_RollerSubsystem
 from core.subsystems.climber import ClimberSubsystem
 from core.subsystems.algae_remover import AlgaeRemoverSubsystem
 from core.classes import TargetAlignmentLocation
@@ -16,6 +17,7 @@ from wpilib import ADIS16470_IMU as IMU
 import core.constants as constants
 import wpilib
 import photonlibpy
+import math
 
 
 class RobotCore(wpilib.TimedRobot):
@@ -53,7 +55,7 @@ class RobotCore(wpilib.TimedRobot):
     self.rollerSubsystem = RollerSubsystem()
     self.climberSubsystem = ClimberSubsystem()
     self.AlgaeRemoverSubsystem = AlgaeRemoverSubsystem()
-    
+    self.Baby_RollerSubsystem = Baby_RollerSubsystem ()
   def _initServices(self) -> None:
     pass 
     # self.localizationService = LocalizationService(self.gyroSensor.getRotation, self.driveSubsystem.getModulePositions, self.poseSensors)
@@ -77,21 +79,19 @@ class RobotCore(wpilib.TimedRobot):
     )
 
     # Driver Controller Binds
-
     self.driverController.rightStick().whileTrue(self.gameCommands.alignRobotToTargetCommand(TargetAlignmentMode.Translation, TargetAlignmentLocation.Center))
     self.driverController.start().onTrue(self.gyroSensor.calibrateCommand())
     self.driverController.back().onTrue(self.gyroSensor.resetCommand())
 
     # Operator Controller Binds
-
     self.operatorController.rightTrigger().whileTrue(self.rollerSubsystem.ejectCommand())
     self.operatorController.rightBumper().whileTrue(self.climberSubsystem.climbCommand())
     self.operatorController.leftTrigger().whileTrue(self.rollerSubsystem.reverseCommand())
     self.operatorController.leftBumper().whileTrue(self.climberSubsystem.reverseCommand())
     self.operatorController.a().whileTrue(self.AlgaeRemoverSubsystem.extendCommand())
     self.operatorController.b().whileTrue(self.AlgaeRemoverSubsystem.retractCommand())
-
-    print("Bound Controller Buttons to Their Actions")
+    self.operatorController.x().whileTrue(self.Baby_RollerSubsystem.reverseCommand())
+    self.operatorController.y().whileTrue(self.Baby_RollerSubsystem.intakeCommand())
 
   def _periodic(self) -> None:
     self.teleopPeriodic()
@@ -111,39 +111,63 @@ class RobotCore(wpilib.TimedRobot):
     self.resetRobot()
   
   def teleopPeriodic(self):
-    if not self.operatorController.y().getAsBoolean():
-      print("Not Running TeleopPeriodic Code")
-      return
+    # We stole this from photonvision docs "Combining Aiming and Getting in Range"
+    xSpeed = self.driverController.getLeftY() #-1.0 * self.driverController.getLeftY() * constants.Subsystems.Drive.kRotationSpeedMax
+    ySpeed = self.driverController.getLeftX() #-1.0 * self.driverController.getLeftX() * constants.Subsystems.Drive.kRotationSpeedMax
+    rot = -1.0 * self.driverController.getRightX() * constants.Subsystems.Drive.kTranslationSpeedMax
 
-    self.rollerSubsystem.auto_ejectCommand(0.25)
+    VISION_TURN_kP = 0.01
+    VISION_DES_ANGLE_deg = 0.0 # Degree
+    VISION_STRAFE_kP = 0.5
+    VISION_DES_RANGE_m = 1.25 # Meters
 
-    # We stole this from photonvision docs "Aiming at Target"
-    xSpeed = -1.0 * self.driverController.getLeftY() * constants.Subsystems.Drive.kRotationSpeedMax
-    ySpeed = -1.0 * self.driverController.getLeftX() * constants.Subsystems.Drive.kRotationSpeedMax
-    rot = -1.0 * self.driverController.getRightX() * constants.Subsystems.Drive.kRotationSpeedMax
+    CAM_MOUNT_HEIGHT_m = 0.6223 # Meters
+    TAG_MOUNT_HEIGHT_m = 0.254 # Meters
+    CAM_MOUNT_PITCH_deg = 0.0 # Degrees
 
     # Get information from the camera
     targetYaw = 0.0
+    targetRange = 0.0
     targetVisible = False
-    results = self._photonCamera.getAllUnreadResults()
-    if len(results) > 0:
+    
+    if self._photonCamera.isConnected():
+      results = self._photonCamera.getAllUnreadResults()
+
+      if len(results) > 0:
         result = results[-1]  # take the most recent result the camera had
+        # At least one apriltag was seen by the camera
         for target in result.getTargets():
-            if target.getFiducialId() in [6,7,8,9,10,11,17,18,19,20,21,22]:
-                # Found tag 7, record its information
-                # We only care if we found an AprilTag that's on the reef
-                targetVisible = True
-                targetYaw = target.getYaw()
-                print(f"Found AprilTag {target.getFiducialId()}")
+          if target.getFiducialId() in [6,7,8,9,10,11,17,18,19,20,21,22]:
+            # Found tag, record its information
+            targetVisible = True
+            targetYaw = target.getYaw()
+            heightDelta = CAM_MOUNT_HEIGHT_m - TAG_MOUNT_HEIGHT_m
+            angleDelta = math.radians(CAM_MOUNT_PITCH_deg - target.getPitch())
+            targetRange = heightDelta / math.tan(angleDelta)
+            print("Found Target With Variables:")
+            print(f"Target Visible: {targetVisible}\nTargetYaw: {targetYaw}\nHeightDelta: {heightDelta}")
+            print(f"AngleDelta: {angleDelta}\nTargetRange: {targetRange}")
 
-    if self.operatorController.x().getAsBoolean() and targetVisible:
-        # Driver wants auto-alignment to tag 7
-        # And, tag 7 is in sight, so we can turn toward it.
-        # Override the driver's turn command with an automatic one that turns toward the tag.
-        print("Rotating to Face AprilTag")
-        rot = -1.0 * targetYaw * (0.25) * constants.Subsystems.Drive.kRotationSpeedMax
+      if self.driverController.rightBumper().getAsBoolean() and targetVisible:
+        # Driver wants auto-alignment to tag
+        # And, tag is in sight, so we can turn toward it.
+        # Override the driver's turn and x-vel command with
+        # an automatic one that turns toward the tag
+        # and puts us at the right distance
+        rot = (
+          (VISION_DES_ANGLE_deg - targetYaw)
+          * VISION_TURN_kP
+          * constants.Subsystems.Drive.kTranslationSpeedMax
+        )
+        xSpeed = (
+          (VISION_DES_RANGE_m - targetRange)
+          * VISION_STRAFE_kP
+          * constants.Subsystems.Drive.kRotationSpeedMax
+        )
+        print("Targetting Apriltag With Variables:")
+        print(f"xSpeed: {xSpeed}\nrot: {rot}")
 
-    self.driveSubsystem._drive(xSpeed, ySpeed, rot)
+        self.driveSubsystem._drive(-xSpeed, ySpeed, rot)
 
   def testInit(self) -> None:
     self.resetRobot()
