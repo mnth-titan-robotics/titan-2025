@@ -1,4 +1,5 @@
 from commands2 import Command
+from commands2.button import Trigger
 from wpilib import DriverStation
 from lib import utils
 from lib.classes import TargetAlignmentMode
@@ -18,6 +19,7 @@ import core.constants as constants
 import wpilib
 import photonlibpy
 import math
+from ntcore import NetworkTableInstance
 
 
 class RobotCore(wpilib.TimedRobot):
@@ -56,8 +58,12 @@ class RobotCore(wpilib.TimedRobot):
     self.climberSubsystem = ClimberSubsystem()
     self.AlgaeRemoverSubsystem = AlgaeRemoverSubsystem()
     self.Baby_RollerSubsystem = Baby_RollerSubsystem ()
-  def _initServices(self) -> None:
-    pass 
+  def _initServices(self) -> None:    
+    nt = NetworkTableInstance.getDefault()
+    self._targetVisible = nt.getBooleanTopic("Vision/TargetVisible").publish()
+    self._aprilTag = nt.getIntegerTopic("Vision/AprilTag").publish()
+    self._targetYaw = nt.getDoubleTopic("Vision/TargetYaw").publish()
+    self._targetRange = nt.getDoubleTopic("Vision/TargetRange").publish()
     # self.localizationService = LocalizationService(self.gyroSensor.getRotation, self.driveSubsystem.getModulePositions, self.poseSensors)
 
   def _initControllers(self) -> None:
@@ -82,6 +88,7 @@ class RobotCore(wpilib.TimedRobot):
     self.driverController.rightStick().whileTrue(self.gameCommands.alignRobotToTargetCommand(TargetAlignmentMode.Translation, TargetAlignmentLocation.Center))
     self.driverController.start().onTrue(self.gyroSensor.calibrateCommand())
     self.driverController.back().onTrue(self.gyroSensor.resetCommand())
+    # self.driverController.rightBumper().whileTrue(self.gameCommands.alignRobotToTargetCommand(...))
 
     # Operator Controller Binds
     self.operatorController.rightTrigger().whileTrue(self.rollerSubsystem.ejectCommand())
@@ -129,6 +136,7 @@ class RobotCore(wpilib.TimedRobot):
     targetYaw = 0.0
     targetRange = 0.0
     targetVisible = False
+    aprilTag = 0
     
     if self._photonCamera.isConnected():
       results = self._photonCamera.getAllUnreadResults()
@@ -137,16 +145,23 @@ class RobotCore(wpilib.TimedRobot):
         result = results[-1]  # take the most recent result the camera had
         # At least one apriltag was seen by the camera
         for target in result.getTargets():
-          if target.getFiducialId() in [6,7,8,9,10,11,17,18,19,20,21,22]:
+          if target.getFiducialId() in [6,7,8,9,10,11,17,18,19,20,21,22]: # These are the Apriltag IDs for the reef positions
             # Found tag, record its information
             targetVisible = True
+            aprilTag = target.getFiducialId()
             targetYaw = target.getYaw()
             heightDelta = CAM_MOUNT_HEIGHT_m - TAG_MOUNT_HEIGHT_m
             angleDelta = math.radians(CAM_MOUNT_PITCH_deg - target.getPitch())
             targetRange = heightDelta / math.tan(angleDelta)
-            print("Found Target With Variables:")
-            print(f"Target Visible: {targetVisible}\nTargetYaw: {targetYaw}\nHeightDelta: {heightDelta}")
-            print(f"AngleDelta: {angleDelta}\nTargetRange: {targetRange}")
+            # print("Found Target With Variables:")
+            # print(f"Target Visible: {targetVisible}\nTargetYaw: {targetYaw}\nHeightDelta: {heightDelta}")
+            # print(f"AngleDelta: {angleDelta}\nTargetRange: {targetRange}")
+            break
+      
+      self._targetVisible.set(targetVisible)
+      self._targetYaw.set(targetYaw)
+      self._targetRange.set(targetRange)
+      self._aprilTag.set(aprilTag)
 
       if self.driverController.rightBumper().getAsBoolean() and targetVisible:
         # Driver wants auto-alignment to tag

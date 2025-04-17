@@ -103,12 +103,12 @@ class Sensors:
   class Pose:
     _poseStrategy = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR
     _fallbackPoseStrategy = PoseStrategy.LOWEST_AMBIGUITY
-    
+
     kPoseSensorConfigs: tuple[PoseSensorConfig, ...] = (
       PoseSensorConfig(
         "Front",
         Transform3d(
-          Translation3d(units.inchesToMeters(0), units.inchesToMeters(0), units.inchesToMeters(0)),
+          Translation3d(units.inchesToMeters(0), units.inchesToMeters(0), 0.6223),
           Rotation3d(units.degreesToRadians(0), units.degreesToRadians(0), units.degreesToRadians(0))
         ), _poseStrategy, _fallbackPoseStrategy, APRIL_TAG_FIELD_LAYOUT
       ),
