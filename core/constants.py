@@ -82,6 +82,11 @@ class Subsystems:
     kMotorCanId: int = 16
     kRotationSpeed: float = 0.5
     kReverseRotationSpeed: float = -0.5
+    kPositionConversionFactor: float = 360.0 / (4.0 * 4.0 * 3.0)
+    kP = 0.5 / kPositionConversionFactor
+    kI = 0.0
+    kD = 0.5 / kPositionConversionFactor
+    kRampPosition: float = 85.0
 
   class Climber:
     kMotorCanId: int = 14
@@ -101,7 +106,7 @@ class Sensors:
       kComType = AHRS.NavXComType.kUSB1
 
   class Pose:
-    _poseStrategy = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR
+    _poseStrategy = PoseStrategy.LOWEST_AMBIGUITY
     _fallbackPoseStrategy = PoseStrategy.LOWEST_AMBIGUITY
 
     kPoseSensorConfigs: tuple[PoseSensorConfig, ...] = (

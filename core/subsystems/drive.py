@@ -6,7 +6,7 @@ from wpimath import units
 from wpimath.controller import PIDController
 from wpimath.filter import SlewRateLimiter
 from wpimath.geometry import Rotation2d, Pose2d, Pose3d
-from wpimath.kinematics import ChassisSpeeds, DifferentialDriveWheelSpeeds
+from wpimath.kinematics import ChassisSpeeds, MecanumDriveWheelSpeeds, MecanumDriveWheelPositions
 from lib import utils
 from lib.classes import DifferentialModuleLocation, DifferentialDriveModulePositions, MotorIdleMode, SpeedMode, DriveOrientation, OptionState, TargetAlignmentMode
 from lib.components.differential_module import DifferentialModule
@@ -120,19 +120,23 @@ class DriveSubsystem(Subsystem):
     # self._drivetrain.tankDrive(wheelSpeeds.left, wheelSpeeds.right)
     self.clearTargetAlignment()
 
-  def getModulePositions(self) -> DifferentialDriveModulePositions:
-    return DifferentialDriveModulePositions(
-      self._differentialModules[DifferentialModuleLocation.LeftRear].getPosition(),
-      self._differentialModules[DifferentialModuleLocation.RightRear].getPosition()
-    )
+  def getModulePositions(self) -> MecanumDriveWheelPositions:
+    wheel_positions = MecanumDriveWheelPositions()
+    wheel_positions.frontLeft = self._differentialModules[DifferentialModuleLocation.LeftFront].getPosition()
+    wheel_positions.frontRight = self._differentialModules[DifferentialModuleLocation.RightFront].getPosition()
+    wheel_positions.rearLeft = self._differentialModules[DifferentialModuleLocation.LeftRear].getPosition()
+    wheel_positions.rearRight = self._differentialModules[DifferentialModuleLocation.RightRear].getPosition()
+
+    return wheel_positions
 
   def getChassisSpeeds(self) -> ChassisSpeeds:
-    return self._constants.kDriveKinematics.toChassisSpeeds(
-      DifferentialDriveWheelSpeeds(
-        self._differentialModules[DifferentialModuleLocation.LeftRear].getVelocity(), 
-        self._differentialModules[DifferentialModuleLocation.RightRear].getVelocity()
-      )
-    )
+    wheel_velocities = MecanumDriveWheelSpeeds()
+    wheel_velocities.frontLeft = self._differentialModules[DifferentialModuleLocation.LeftFront].getVelocity()
+    wheel_velocities.frontRight = self._differentialModules[DifferentialModuleLocation.RightFront].getVelocity()
+    wheel_velocities.rearLeft = self._differentialModules[DifferentialModuleLocation.LeftRear].getVelocity()
+    wheel_velocities.rearRight = self._differentialModules[DifferentialModuleLocation.RightRear].getVelocity()
+
+    return self._constants.kDriveKinematics.toChassisSpeeds(wheel_velocities)
 
   def _setIdleMode(self, idleMode: MotorIdleMode) -> None:
     # TODO: implement idleMode change on motor controllers

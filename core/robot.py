@@ -1,5 +1,4 @@
 from commands2 import Command
-from commands2.button import Trigger
 from wpilib import DriverStation
 from lib import utils
 from lib.classes import TargetAlignmentMode
@@ -15,11 +14,15 @@ from core.subsystems.climber import ClimberSubsystem
 from core.subsystems.algae_remover import AlgaeRemoverSubsystem
 from core.classes import TargetAlignmentLocation
 from wpilib import ADIS16470_IMU as IMU
+from wpimath.geometry import Transform3d, Pose3d
+from ntcore import NetworkTableInstance
+from core.services.mecanum_localization import LocalizationService
+
+
 import core.constants as constants
 import wpilib
 import photonlibpy
 import math
-from ntcore import NetworkTableInstance
 
 
 class RobotCore(wpilib.TimedRobot):
@@ -51,6 +54,16 @@ class RobotCore(wpilib.TimedRobot):
     self.poseSensors = tuple(PoseSensor(c) for c in constants.Sensors.Pose.kPoseSensorConfigs)
 
     self._photonCamera = photonlibpy.PhotonCamera("Arducam_OV9281_USB_Camera")
+
+    self._photon_rot = None
+    self._photon_xValue = None
+
+    self._photon_estimator = photonlibpy.PhotonPoseEstimator(
+            constants.APRIL_TAG_FIELD_LAYOUT, 
+            constants.Sensors.Pose._poseStrategy,
+            self._photonCamera,
+            Transform3d()
+    )
     
   def _initSubsystems(self) -> None:
     self.driveSubsystem = DriveSubsystem(self.gyroSensor.getHeading)
@@ -58,13 +71,15 @@ class RobotCore(wpilib.TimedRobot):
     self.climberSubsystem = ClimberSubsystem()
     self.AlgaeRemoverSubsystem = AlgaeRemoverSubsystem()
     self.Baby_RollerSubsystem = Baby_RollerSubsystem ()
+
   def _initServices(self) -> None:    
     nt = NetworkTableInstance.getDefault()
     self._targetVisible = nt.getBooleanTopic("Vision/TargetVisible").publish()
     self._aprilTag = nt.getIntegerTopic("Vision/AprilTag").publish()
     self._targetYaw = nt.getDoubleTopic("Vision/TargetYaw").publish()
     self._targetRange = nt.getDoubleTopic("Vision/TargetRange").publish()
-    # self.localizationService = LocalizationService(self.gyroSensor.getRotation, self.driveSubsystem.getModulePositions, self.poseSensors)
+    
+    self.localizationService = LocalizationService(self.gyroSensor.getRotation, self.driveSubsystem.getModulePositions, self.poseSensors)
 
   def _initControllers(self) -> None:
     self.driverController = GameController(constants.Controllers.kDriverControllerPort, constants.Controllers.kInputDeadband)
@@ -74,6 +89,15 @@ class RobotCore(wpilib.TimedRobot):
   def _initCommands(self) -> None:
     self.gameCommands = GameCommands(self)
     self.autoCommands = AutoCommands(self)
+
+  def _driveLockOn(self):
+    if self._photon_rot and self._photon_xValue:
+      self.driveSubsystem._drive(self._photon_xValue, 0, self._photon_rot)
+
+  def _lockOnTag(self) -> Command:
+    return self.driveSubsystem.run(
+      self._driveLockOn
+    )
 
   def _initTriggers(self) -> None:
     self.driveSubsystem.setDefaultCommand(
@@ -88,7 +112,7 @@ class RobotCore(wpilib.TimedRobot):
     self.driverController.rightStick().whileTrue(self.gameCommands.alignRobotToTargetCommand(TargetAlignmentMode.Translation, TargetAlignmentLocation.Center))
     self.driverController.start().onTrue(self.gyroSensor.calibrateCommand())
     self.driverController.back().onTrue(self.gyroSensor.resetCommand())
-    # self.driverController.rightBumper().whileTrue(self.gameCommands.alignRobotToTargetCommand(...))
+    self.driverController.rightBumper().whileTrue(self._lockOnTag())
 
     # Operator Controller Binds
     self.operatorController.rightTrigger().whileTrue(self.rollerSubsystem.ejectCommand())
@@ -99,8 +123,10 @@ class RobotCore(wpilib.TimedRobot):
     self.operatorController.b().whileTrue(self.AlgaeRemoverSubsystem.retractCommand())
     self.operatorController.x().whileTrue(self.Baby_RollerSubsystem.reverseCommand())
     self.operatorController.y().whileTrue(self.Baby_RollerSubsystem.intakeCommand())
+    self.operatorController.povUp().whileTrue(self.AlgaeRemoverSubsystem.rampCommand())
 
   def _periodic(self) -> None:
+    self.localizationService._periodic()
     self.teleopPeriodic()
     self._updateTelemetry()
 
@@ -126,7 +152,7 @@ class RobotCore(wpilib.TimedRobot):
     VISION_TURN_kP = 0.01
     VISION_DES_ANGLE_deg = 0.0 # Degree
     VISION_STRAFE_kP = 0.5
-    VISION_DES_RANGE_m = 1.25 # Meters
+    VISION_DES_RANGE_m = 0.5 # Meters
 
     CAM_MOUNT_HEIGHT_m = 0.6223 # Meters
     TAG_MOUNT_HEIGHT_m = 0.254 # Meters
@@ -143,11 +169,13 @@ class RobotCore(wpilib.TimedRobot):
 
       if len(results) > 0:
         result = results[-1]  # take the most recent result the camera had
+
         # At least one apriltag was seen by the camera
         for target in result.getTargets():
           if target.getFiducialId() in [6,7,8,9,10,11,17,18,19,20,21,22]: # These are the Apriltag IDs for the reef positions
             # Found tag, record its information
             targetVisible = True
+
             aprilTag = target.getFiducialId()
             targetYaw = target.getYaw()
             heightDelta = CAM_MOUNT_HEIGHT_m - TAG_MOUNT_HEIGHT_m
@@ -163,26 +191,23 @@ class RobotCore(wpilib.TimedRobot):
       self._targetRange.set(targetRange)
       self._aprilTag.set(aprilTag)
 
-      if self.driverController.rightBumper().getAsBoolean() and targetVisible:
+      if targetVisible:
         # Driver wants auto-alignment to tag
         # And, tag is in sight, so we can turn toward it.
         # Override the driver's turn and x-vel command with
         # an automatic one that turns toward the tag
         # and puts us at the right distance
-        rot = (
+
+        self._photon_rot = (
           (VISION_DES_ANGLE_deg - targetYaw)
           * VISION_TURN_kP
           * constants.Subsystems.Drive.kTranslationSpeedMax
         )
-        xSpeed = (
+        self._photon_xValue = (
           (VISION_DES_RANGE_m - targetRange)
           * VISION_STRAFE_kP
           * constants.Subsystems.Drive.kRotationSpeedMax
         )
-        print("Targetting Apriltag With Variables:")
-        print(f"xSpeed: {xSpeed}\nrot: {rot}")
-
-        self.driveSubsystem._drive(-xSpeed, ySpeed, rot)
 
   def testInit(self) -> None:
     self.resetRobot()

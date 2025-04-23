@@ -1,6 +1,6 @@
 from typing import Callable
 from wpimath.geometry import Rotation2d, Pose2d, Pose3d
-from wpimath.estimator import DifferentialDrivePoseEstimator
+from wpimath.estimator import DifferentialDrivePoseEstimator, MecanumDrivePoseEstimator
 from photonlibpy.photonPoseEstimator import PoseStrategy
 from lib.sensors.pose_sensor import PoseSensor
 from lib.classes import DifferentialDriveModulePositions
