@@ -35,13 +35,33 @@ class Subsystems:
     )
 
     kDifferentialModuleConfigs: tuple[DifferentialModuleConfig, ...] = (
-      DifferentialModuleConfig(DifferentialModuleLocation.LeftFront, 10, None, True, _differentialModuleConstants),
-      DifferentialModuleConfig(DifferentialModuleLocation.LeftRear, 11, None, True, _differentialModuleConstants),
-      DifferentialModuleConfig(DifferentialModuleLocation.RightFront, 12, None, False, _differentialModuleConstants),
-      DifferentialModuleConfig(DifferentialModuleLocation.RightRear, 13, None, False, _differentialModuleConstants)
+      DifferentialModuleConfig(
+        location = DifferentialModuleLocation.LeftFront, 
+        drivingMotorCANId = 10, 
+        leaderMotorCANId = None, 
+        isInverted = False,
+        constants = _differentialModuleConstants),
+      DifferentialModuleConfig(
+        location = DifferentialModuleLocation.LeftRear, 
+        drivingMotorCANId = 11, 
+        leaderMotorCANId = None, 
+        isInverted = False,
+        constants = _differentialModuleConstants),
+      DifferentialModuleConfig(
+        location = DifferentialModuleLocation.RightFront, 
+        drivingMotorCANId = 12, 
+        leaderMotorCANId = None, 
+        isInverted = True,
+        constants = _differentialModuleConstants),
+      DifferentialModuleConfig(
+        location = DifferentialModuleLocation.RightRear, 
+        drivingMotorCANId = 13, 
+        leaderMotorCANId = None, 
+        isInverted = True,
+        constants = _differentialModuleConstants)
     )
 
-    kDriveKinematics = Kinematics(
+    kDriveKinematics  =  Kinematics(
       Translation2d(kWheelBase / 2.0, kTrackWidth / 2.0),
       Translation2d(kWheelBase / 2.0, -kTrackWidth / 2.0),
       Translation2d(-kWheelBase / 2.0, kTrackWidth / 2.0),

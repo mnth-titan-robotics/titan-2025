@@ -116,6 +116,12 @@ class DriveSubsystem(Subsystem):
 
   def drive(self, chassisSpeeds: ChassisSpeeds) -> None:
     wheelSpeeds = self._constants.kDriveKinematics.toWheelSpeeds(chassisSpeeds)
+    
+    self._differentialModules[DifferentialModuleLocation.LeftFront].setVelocity(wheelSpeeds.frontLeft)
+    self._differentialModules[DifferentialModuleLocation.RightFront].setVelocity(wheelSpeeds.frontRight)
+    self._differentialModules[DifferentialModuleLocation.LeftRear].setVelocity(wheelSpeeds.rearLeft)
+    self._differentialModules[DifferentialModuleLocation.RightRear].setVelocity(wheelSpeeds.rearRight)
+    
     # TODO: Fix this, or get rid of this method
     # self._drivetrain.tankDrive(wheelSpeeds.left, wheelSpeeds.right)
     self.clearTargetAlignment()
@@ -135,7 +141,9 @@ class DriveSubsystem(Subsystem):
     wheel_velocities.frontRight = self._differentialModules[DifferentialModuleLocation.RightFront].getVelocity()
     wheel_velocities.rearLeft = self._differentialModules[DifferentialModuleLocation.LeftRear].getVelocity()
     wheel_velocities.rearRight = self._differentialModules[DifferentialModuleLocation.RightRear].getVelocity()
-
+    self._constants.kDriveKinematics.toWheelSpeeds(
+      
+    )
     return self._constants.kDriveKinematics.toChassisSpeeds(wheel_velocities)
 
   def _setIdleMode(self, idleMode: MotorIdleMode) -> None:

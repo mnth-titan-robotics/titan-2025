@@ -63,7 +63,10 @@ class LocalizationService():
         self._updateTelemetry()
 
     def _updateRobotPose(self):
-        self._poseEstimator.update(gyroAngle=self._getGyroRotation(), wheelPositions=self._getModulePositions())
+        # Arrow Pointing Down if Copy-Paste Wanted:  ↓
+        # This should invert the gyro angle    ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓     if nessesary, no clue if it works though
+        self._poseEstimator.update(gyroAngle= (self._getGyroRotation()), wheelPositions=self._getModulePositions())
+
         estimated_pose = self._photon_estimator.update()
         if estimated_pose:
             self.estimated_pose_3d = estimated_pose.estimatedPose
@@ -71,8 +74,6 @@ class LocalizationService():
             self._poseEstimator.addVisionMeasurement(estimated_pose_2d, estimated_pose.timestampSeconds)
 
         self._robotPose = self._poseEstimator.getEstimatedPosition()
-
-        # Invert Gyro Rotation Maybe
 
     def _updateTelemetry(self):
         self._photon_estimation.set(self.estimated_pose_3d)

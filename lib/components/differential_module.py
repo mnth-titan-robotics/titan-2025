@@ -29,7 +29,8 @@ class DifferentialModule:
       .voltageCompensation(11.0))
     (self._drivingMotorConfig.encoder
       .positionConversionFactor(drivingEncoderPositionConversionFactor)
-      .velocityConversionFactor(drivingEncoderPositionConversionFactor / 60.0))
+      .velocityConversionFactor(drivingEncoderPositionConversionFactor / 60.0)
+    )
     if self._config.leaderMotorCANId is not None:
       self._drivingMotorConfig.follow(self._config.leaderMotorCANId)
     utils.setSparkConfig(
@@ -58,6 +59,9 @@ class DifferentialModule:
   def getVelocity(self) -> float:
     return self._drivingEncoder.getVelocity()
   
+  def setVelocity(self, v: float) -> None:
+    self._drivingMotor.set(v)
+  
   def setIdleMode(self, motorIdleMode: MotorIdleMode) -> None:
     idleMode = SparkBaseConfig.IdleMode.kCoast if motorIdleMode == MotorIdleMode.Coast else SparkBaseConfig.IdleMode.kBrake
     utils.setSparkConfig(self._drivingMotor.configure(SparkBaseConfig().setIdleMode(idleMode), SparkBase.ResetMode.kNoResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters))
@@ -66,7 +70,7 @@ class DifferentialModule:
     self._drivingEncoder.setPosition(0)
 
   def _updateTelemetry(self) -> None:
-    #SmartDashboard.putNumber(f'{self._baseKey}/Driving/Speed/Target', self._drivingTargetSpeed)
-    #SmartDashboard.putNumber(f'{self._baseKey}/Driving/Speed/Actual', self._drivingEncoder.getVelocity())
-    #SmartDashboard.putNumber(f'{self._baseKey}/Driving/Position', self._drivingEncoder.getPosition())
+    SmartDashboard.putNumber(f'{self._baseKey}/Driving/Speed/Target', self._drivingTargetSpeed)
+    SmartDashboard.putNumber(f'{self._baseKey}/Driving/Speed/Actual', self._drivingEncoder.getVelocity())
+    SmartDashboard.putNumber(f'{self._baseKey}/Driving/Position', self._drivingEncoder.getPosition())
     pass

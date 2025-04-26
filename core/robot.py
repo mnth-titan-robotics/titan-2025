@@ -98,21 +98,27 @@ class RobotCore(wpilib.TimedRobot):
     return self.driveSubsystem.run(
       self._driveLockOn
     )
+  
+  def _resetGyroCommand(self) -> Command:
+    return self.driveSubsystem.runOnce(
+      lambda: self.gyroSensor.resetRobotToField(self.localizationService.getRobotPose())
+    )
 
   def _initTriggers(self) -> None:
     self.driveSubsystem.setDefaultCommand(
       self.driveSubsystem.driveCommand(
-        lambda: - self.driverController.getLeftY(),
-        self.driverController.getLeftX,
-        self.driverController.getRightX
+        lambda: self.driverController.getLeftY(),
+        lambda: -self.driverController.getLeftX(),
+        lambda: -self.driverController.getRightX()
       )
     )
 
     # Driver Controller Binds
     self.driverController.rightStick().whileTrue(self.gameCommands.alignRobotToTargetCommand(TargetAlignmentMode.Translation, TargetAlignmentLocation.Center))
-    self.driverController.start().onTrue(self.gyroSensor.calibrateCommand())
-    self.driverController.back().onTrue(self.gyroSensor.resetCommand())
+    #self.driverController.start().onTrue(self.gyroSensor.calibrateCommand())
+    #self.driverController.back().onTrue(self.gyroSensor.resetCommand())
     self.driverController.rightBumper().whileTrue(self._lockOnTag())
+    self.driverController.start().onTrue(self._resetGyroCommand())
 
     # Operator Controller Binds
     self.operatorController.rightTrigger().whileTrue(self.rollerSubsystem.ejectCommand())
@@ -145,10 +151,6 @@ class RobotCore(wpilib.TimedRobot):
   
   def teleopPeriodic(self):
     # We stole this from photonvision docs "Combining Aiming and Getting in Range"
-    xSpeed = self.driverController.getLeftY() #-1.0 * self.driverController.getLeftY() * constants.Subsystems.Drive.kRotationSpeedMax
-    ySpeed = self.driverController.getLeftX() #-1.0 * self.driverController.getLeftX() * constants.Subsystems.Drive.kRotationSpeedMax
-    rot = -1.0 * self.driverController.getRightX() * constants.Subsystems.Drive.kTranslationSpeedMax
-
     VISION_TURN_kP = 0.01
     VISION_DES_ANGLE_deg = 0.0 # Degree
     VISION_STRAFE_kP = 0.5
@@ -172,8 +174,8 @@ class RobotCore(wpilib.TimedRobot):
 
         # At least one apriltag was seen by the camera
         for target in result.getTargets():
-          if target.getFiducialId() in [6,7,8,9,10,11,17,18,19,20,21,22]: # These are the Apriltag IDs for the reef positions
-            # Found tag, record its information
+          if target.getFiducialId() not in [3,4,5,14,15,16]: # These are the Apriltag IDs that we don't want to see (Barge, Processor, etc.)
+            # Found tag that we don't want to ignore, record its information
             targetVisible = True
 
             aprilTag = target.getFiducialId()
@@ -181,9 +183,6 @@ class RobotCore(wpilib.TimedRobot):
             heightDelta = CAM_MOUNT_HEIGHT_m - TAG_MOUNT_HEIGHT_m
             angleDelta = math.radians(CAM_MOUNT_PITCH_deg - target.getPitch())
             targetRange = heightDelta / math.tan(angleDelta)
-            # print("Found Target With Variables:")
-            # print(f"Target Visible: {targetVisible}\nTargetYaw: {targetYaw}\nHeightDelta: {heightDelta}")
-            # print(f"AngleDelta: {angleDelta}\nTargetRange: {targetRange}")
             break
       
       self._targetVisible.set(targetVisible)
