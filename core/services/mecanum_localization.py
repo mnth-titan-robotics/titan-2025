@@ -39,7 +39,7 @@ class LocalizationService():
             constants.APRIL_TAG_FIELD_LAYOUT, 
             constants.Sensors.Pose._poseStrategy,
             self._photonCamera,
-            Transform3d()
+            constants.Sensors.Pose.kPoseSensorConfigs[0].cameraTransform
         )
 
         nt = NetworkTableInstance.getDefault()

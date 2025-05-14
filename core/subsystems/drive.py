@@ -105,13 +105,19 @@ class DriveSubsystem(Subsystem):
     # Theoretically ^ this ^ should be input scaling
     # This causes issues with rotation where it just doesn't so idk
 
+    #chassisSpeed = ChassisSpeeds.fromRobotRelativeSpeeds(
+    #  inputX, 
+    #  inputY, 
+    #  inputRotation, 
+    #  Rotation2d()  #(.fromDegrees(self._getGyroHeading()))
+    #)
+    #self.drive(chassisSpeeds=chassisSpeed)
+
     self._drivetrain.driveCartesian(
       xSpeed=inputX,
       ySpeed=inputY,
       zRotation=inputRotation,
       gyroAngle=Rotation2d()  #.fromDegrees(self._getGyroHeading())
-
-      #drift correction goes here
     )
 
   def drive(self, chassisSpeeds: ChassisSpeeds) -> None:
@@ -121,7 +127,7 @@ class DriveSubsystem(Subsystem):
     self._differentialModules[DifferentialModuleLocation.RightFront].setVelocity(wheelSpeeds.frontRight)
     self._differentialModules[DifferentialModuleLocation.LeftRear].setVelocity(wheelSpeeds.rearLeft)
     self._differentialModules[DifferentialModuleLocation.RightRear].setVelocity(wheelSpeeds.rearRight)
-    
+
     # TODO: Fix this, or get rid of this method
     # self._drivetrain.tankDrive(wheelSpeeds.left, wheelSpeeds.right)
     self.clearTargetAlignment()

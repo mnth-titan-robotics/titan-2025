@@ -133,7 +133,7 @@ class Sensors:
       PoseSensorConfig(
         "Front",
         Transform3d(
-          Translation3d(units.inchesToMeters(0), units.inchesToMeters(0), 0.6223),
+          Translation3d(units.inchesToMeters(14.125), units.inchesToMeters(-8.625), units.inchesToMeters(25.5)),
           Rotation3d(units.degreesToRadians(0), units.degreesToRadians(0), units.degreesToRadians(0))
         ), _poseStrategy, _fallbackPoseStrategy, APRIL_TAG_FIELD_LAYOUT
       ),
