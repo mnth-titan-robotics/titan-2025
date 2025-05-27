@@ -139,17 +139,10 @@ class RobotCore(wpilib.TimedRobot):
   def getAutoCommand(self) -> Command:
     return self.autoCommands.getSelected()
 
-  def autoInit(self) -> None:
-    self.resetRobot()
-
-  def autoExit(self) -> None: 
-    # self.gyroSensor.resetRobotToField(self.localizationService.getRobotPose())
-    pass
-
-  def teleopInit(self) -> None:
+  def autonomousInit(self) -> None:
     self.resetRobot()
   
-  def teleopPeriodic(self):
+  def autonomousPeriodic(self) -> None:
     # We stole this from photonvision docs "Combining Aiming and Getting in Range"
     VISION_TURN_kP = 0.01
     VISION_DES_ANGLE_deg = 0.0 # Degree
@@ -207,6 +200,16 @@ class RobotCore(wpilib.TimedRobot):
           * VISION_STRAFE_kP
           * constants.Subsystems.Drive.kRotationSpeedMax
         )
+  
+  def autonomousExit(self) -> None:
+    # self.gyroSensor.resetRobotToField(self.localizationService.getRobotPose())
+    pass
+
+  def teleopInit(self) -> None:
+    self.resetRobot()
+  
+  def teleopPeriodic(self):
+    pass
 
   def testInit(self) -> None:
     self.resetRobot()
