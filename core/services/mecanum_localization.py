@@ -34,21 +34,21 @@ class LocalizationService():
             #constants.Services.Localization.kVisionDefaultStandardDeviations
         )
 
-        self._photonCamera = photonlibpy.PhotonCamera("Arducam_OV9281_USB_Camera")
-        self._photon_estimator = photonlibpy.PhotonPoseEstimator(
-            constants.APRIL_TAG_FIELD_LAYOUT, 
-            constants.Sensors.Pose._poseStrategy,
-            self._photonCamera,
-            constants.Sensors.Pose.kPoseSensorConfigs[0].cameraTransform
-        )
+        # self._photonCamera = photonlibpy.PhotonCamera("Arducam_OV9281_USB_Camera")
+        # self._photon_estimator = photonlibpy.PhotonPoseEstimator(
+        #     constants.APRIL_TAG_FIELD_LAYOUT, 
+        #     constants.Sensors.Pose._poseStrategy,
+        #     self._photonCamera,
+        #     constants.Sensors.Pose.kPoseSensorConfigs[0].cameraTransform
+        # )
 
         nt = NetworkTableInstance.getDefault()
-        self._photon_estimation = nt.getStructTopic("Vision/EstimatedPose", Pose3d).publish()
-        self._photon_estimation_2d = nt.getStructTopic("Vision/EstimatedPose2d", Pose2d).publish()
+        # self._photon_estimation = nt.getStructTopic("Vision/EstimatedPose", Pose3d).publish()
+        # self._photon_estimation_2d = nt.getStructTopic("Vision/EstimatedPose2d", Pose2d).publish()
         self._gyro_readings = nt.getFloatTopic("Robot/Gyroscope").publish()
 
-        self._photon_estimation.set(Pose3d())
-        self._photon_estimation_2d.set(Pose2d())
+        # self._photon_estimation.set(Pose3d())
+        # self._photon_estimation_2d.set(Pose2d())
 
         self.estimated_pose_3d = Pose3d()
 
@@ -58,9 +58,10 @@ class LocalizationService():
         self._targetPoses: list[Pose2d] = []
     
     def _periodic(self) -> None:
-        self._updateRobotPose()
+        pass
+       # self._updateRobotPose()
         #self._updateTargets()
-        self._updateTelemetry()
+        #self._updateTelemetry()
 
     def _updateRobotPose(self):
         # Arrow Pointing Down if Copy-Paste Wanted:  ↓

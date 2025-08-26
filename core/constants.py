@@ -1,5 +1,5 @@
 from wpimath import units
-from wpimath.geometry import Transform3d, Translation3d, Rotation3d, Translation2d
+from wpimath.geometry import Transform3d, Translation3d, Rotation3d, Translation2d, Pose2d, Pose3d
 from wpimath.kinematics import MecanumDriveKinematics as Kinematics
 from robotpy_apriltag import AprilTagField, AprilTagFieldLayout
 from navx import AHRS
@@ -128,6 +128,14 @@ class Sensors:
   class Pose:
     _poseStrategy = PoseStrategy.LOWEST_AMBIGUITY
     _fallbackPoseStrategy = PoseStrategy.LOWEST_AMBIGUITY
+    robotToQuestnav = Pose3d(
+      Translation3d(
+        units.inches(16.875),
+        units.inches(-0.25),
+        units.inches(37.5)
+      ), 
+      Rotation3d()
+      )
 
     kPoseSensorConfigs: tuple[PoseSensorConfig, ...] = (
       PoseSensorConfig(

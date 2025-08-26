@@ -13,6 +13,12 @@ import wpiutil
 if TYPE_CHECKING: from core.robot import RobotCore
 import core.constants as constants
 
+# Plan
+#
+# Compensate for Quest's real position relative to the robot's origin
+# Create internal position and rotation value based on QuestNav
+# Move based on that position and from QuestNav
+# 
 
 class AutoPath(Enum):
   Move1 = auto()
@@ -23,7 +29,6 @@ class AutoCommands:
       robot: "RobotCore"
     ) -> None:
     self._robot = robot
-    self.camera = self._robot._photonCamera
     self.localization = self._robot.localizationService
     self.alliance = None
 
@@ -67,8 +72,9 @@ class AutoCommands:
     return self._autoCommandChooser.getSelected()()
   
   def _reset(self, path: AutoPath) -> Command:
+    inital_pose = self._paths.get(path).getPathPoses()[0]
     return cmd.sequence(
-      AutoBuilder.resetOdom(self._paths.get(path).getPathPoses()[0].transformBy(Transform2d(0, 0, self._paths.get(path).getInitialHeading()))),
+      AutoBuilder.resetOdom(inital_pose.transformBy(Transform2d(0, 0, self._paths.get(path).getInitialHeading()))),
       cmd.waitSeconds(0.1)
     )
   
@@ -87,16 +93,6 @@ class AutoCommands:
 
   def setRedAlliance(self):
     self.alliance = "red"
-  
-  def getCameraVariables(self, aprilTagID: list[int]):  
-    if self.camera.isConnected():
-      results = self.camera.getAllUnreadResults()
-      if results and len(results):
-        result = results[-1]
-        # for result in results:
-        for target in result.getTargets():
-          if target.getFiducialId() in aprilTagID:
-            return target.getYaw()
 
   def getAngleToAprilTag(self, aprilTagID: int) -> float:
     tagPose = constants.APRIL_TAG_FIELD_LAYOUT.getTagPose(aprilTagID).toPose2d()

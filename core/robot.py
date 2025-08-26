@@ -5,6 +5,7 @@ from lib.classes import TargetAlignmentMode
 from lib.controllers.game_controller import GameController
 from lib.sensors.gyro_sensor_adis16470 import GyroSensor_ADIS16470
 from lib.sensors.pose_sensor import PoseSensor
+from lib.sensors.limelight import LimeLightHelper
 from core.commands.auto import AutoCommands
 from core.commands.game import GameCommands
 from core.subsystems.drive import DriveSubsystem
@@ -21,13 +22,16 @@ from core.services.mecanum_localization import LocalizationService
 
 import core.constants as constants
 import wpilib
-import photonlibpy
 import math
+import limelight
 
 
 class RobotCore(wpilib.TimedRobot):
-  def robotInit(self):
-   pass
+  #def robotInit(self):
+  #  pass
+   #d_limelights = limelight.discover_limelights()
+   #if d_limelights:
+   #  print(d_limelights[0])
 
   def __init__(self) -> None:
     super().__init__()
@@ -53,17 +57,19 @@ class RobotCore(wpilib.TimedRobot):
 
     self.poseSensors = tuple(PoseSensor(c) for c in constants.Sensors.Pose.kPoseSensorConfigs)
 
-    self._photonCamera = photonlibpy.PhotonCamera("Arducam_OV9281_USB_Camera")
+    #self._photonCamera = photonlibpy.PhotonCamera("Arducam_OV9281_USB_Camera")
 
-    self._photon_rot = None
-    self._photon_xValue = None
+    #self._photon_rot = None
+    #self._photon_xValue = None
 
-    self._photon_estimator = photonlibpy.PhotonPoseEstimator(
-            constants.APRIL_TAG_FIELD_LAYOUT, 
-            constants.Sensors.Pose._poseStrategy,
-            self._photonCamera,
-            Transform3d()
-    )
+    #self._photon_estimator = photonlibpy.PhotonPoseEstimator(
+     #       constants.APRIL_TAG_FIELD_LAYOUT, 
+      #      constants.Sensors.Pose._poseStrategy,
+       #     self._photonCamera,
+        #    Transform3d()
+    #)
+
+    # self._LimelightHelper = LimeLightHelper()
     
   def _initSubsystems(self) -> None:
     self.driveSubsystem = DriveSubsystem(self.gyroSensor.getHeading)
@@ -73,11 +79,11 @@ class RobotCore(wpilib.TimedRobot):
     self.Baby_RollerSubsystem = Baby_RollerSubsystem ()
 
   def _initServices(self) -> None:    
-    nt = NetworkTableInstance.getDefault()
-    self._targetVisible = nt.getBooleanTopic("Vision/TargetVisible").publish()
-    self._aprilTag = nt.getIntegerTopic("Vision/AprilTag").publish()
-    self._targetYaw = nt.getDoubleTopic("Vision/TargetYaw").publish()
-    self._targetRange = nt.getDoubleTopic("Vision/TargetRange").publish()
+    # nt = NetworkTableInstance.getDefault()
+    # self._targetVisible = nt.getBooleanTopic("Vision/TargetVisible").publish()
+    # self._aprilTag = nt.getIntegerTopic("Vision/AprilTag").publish()
+    # self._targetYaw = nt.getDoubleTopic("Vision/TargetYaw").publish()
+    # self._targetRange = nt.getDoubleTopic("Vision/TargetRange").publish()
     
     self.localizationService = LocalizationService(self.gyroSensor.getRotation, self.driveSubsystem.getModulePositions, self.poseSensors)
 
@@ -89,15 +95,6 @@ class RobotCore(wpilib.TimedRobot):
   def _initCommands(self) -> None:
     self.gameCommands = GameCommands(self)
     self.autoCommands = AutoCommands(self)
-
-  def _driveLockOn(self):
-    if self._photon_rot and self._photon_xValue:
-      self.driveSubsystem._drive(self._photon_xValue, 0, self._photon_rot)
-
-  def _lockOnTag(self) -> Command:
-    return self.driveSubsystem.run(
-      self._driveLockOn
-    )
   
   def _resetGyroCommand(self) -> Command:
     return self.driveSubsystem.runOnce(
@@ -117,7 +114,6 @@ class RobotCore(wpilib.TimedRobot):
     self.driverController.rightStick().whileTrue(self.gameCommands.alignRobotToTargetCommand(TargetAlignmentMode.Translation, TargetAlignmentLocation.Center))
     #self.driverController.start().onTrue(self.gyroSensor.calibrateCommand())
     #self.driverController.back().onTrue(self.gyroSensor.resetCommand())
-    self.driverController.rightBumper().whileTrue(self._lockOnTag())
     self.driverController.start().onTrue(self._resetGyroCommand())
 
     # Operator Controller Binds
@@ -134,74 +130,74 @@ class RobotCore(wpilib.TimedRobot):
   def _periodic(self) -> None:
     self.localizationService._periodic()
     self.teleopPeriodic()
-    self._updateTelemetry()
+    #self._updateTelemetry()
 
   def getAutoCommand(self) -> Command:
     return self.autoCommands.getSelected()
 
-  def autonomousInit(self) -> None:
+  def autoInit(self) -> None:
     self.resetRobot()
   
-  def autonomousPeriodic(self) -> None:
-    # We stole this from photonvision docs "Combining Aiming and Getting in Range"
-    VISION_TURN_kP = 0.01
-    VISION_DES_ANGLE_deg = 0.0 # Degree
-    VISION_STRAFE_kP = 0.5
-    VISION_DES_RANGE_m = 0.5 # Meters
+  # def autonomousPeriodic(self) -> None:
+  #   # We stole this from photonvision docs "Combining Aiming and Getting in Range"
+  #   VISION_TURN_kP = 0.01
+  #   VISION_DES_ANGLE_deg = 0.0 # Degree
+  #   VISION_STRAFE_kP = 0.5
+  #   VISION_DES_RANGE_m = 0.5 # Meters
 
-    CAM_MOUNT_HEIGHT_m = 0.6223 # Meters
-    TAG_MOUNT_HEIGHT_m = 0.254 # Meters
-    CAM_MOUNT_PITCH_deg = 0.0 # Degrees
+  #   CAM_MOUNT_HEIGHT_m = 0.6223 # Meters
+  #   TAG_MOUNT_HEIGHT_m = 0.254 # Meters
+  #   CAM_MOUNT_PITCH_deg = 0.0 # Degrees
 
-    # Get information from the camera
-    targetYaw = 0.0
-    targetRange = 0.0
-    targetVisible = False
-    aprilTag = 0
+  #   # Get information from the camera
+  #   targetYaw = 0.0
+  #   targetRange = 0.0
+  #   targetVisible = False
+  #   aprilTag = 0
     
-    if self._photonCamera.isConnected():
-      results = self._photonCamera.getAllUnreadResults()
+  #   if self._photonCamera.isConnected():
+  #     results = self._photonCamera.getAllUnreadResults()
 
-      if len(results) > 0:
-        result = results[-1]  # take the most recent result the camera had
+  #     if len(results) > 0:
+  #       result = results[-1]  # take the most recent result the camera had
 
-        # At least one apriltag was seen by the camera
-        for target in result.getTargets():
-          if target.getFiducialId() not in [3,4,5,14,15,16]: # These are the Apriltag IDs that we don't want to see (Barge, Processor, etc.)
-            # Found tag that we don't want to ignore, record its information
-            targetVisible = True
+  #       # At least one apriltag was seen by the camera
+  #       for target in result.getTargets():
+  #         if target.getFiducialId() not in [3,4,5,14,15,16]: # These are the Apriltag IDs that we don't want to see (Barge, Processor, etc.)
+  #           # Found tag that we don't want to ignore, record its information
+  #           targetVisible = True
 
-            aprilTag = target.getFiducialId()
-            targetYaw = target.getYaw()
-            heightDelta = CAM_MOUNT_HEIGHT_m - TAG_MOUNT_HEIGHT_m
-            angleDelta = math.radians(CAM_MOUNT_PITCH_deg - target.getPitch())
-            targetRange = heightDelta / math.tan(angleDelta)
-            break
+  #           aprilTag = target.getFiducialId()
+  #           targetYaw = target.getYaw()
+  #           heightDelta = CAM_MOUNT_HEIGHT_m - TAG_MOUNT_HEIGHT_m
+  #           angleDelta = math.radians(CAM_MOUNT_PITCH_deg - target.getPitch())
+  #           targetRange = heightDelta / math.tan(angleDelta)
+  #           break
       
-      self._targetVisible.set(targetVisible)
-      self._targetYaw.set(targetYaw)
-      self._targetRange.set(targetRange)
-      self._aprilTag.set(aprilTag)
+  #     self._targetVisible.set(targetVisible)
+  #     self._targetYaw.set(targetYaw)
+  #     self._targetRange.set(targetRange)
+  #     self._aprilTag.set(aprilTag)
 
-      if targetVisible:
-        # Driver wants auto-alignment to tag
-        # And, tag is in sight, so we can turn toward it.
-        # Override the driver's turn and x-vel command with
-        # an automatic one that turns toward the tag
-        # and puts us at the right distance
+  #     if targetVisible:
+  #       # Driver wants auto-alignment to tag
+  #       # And, tag is in sight, so we can turn toward it.
+  #       # Override the driver's turn and x-vel command with
+  #       # an automatic one that turns toward the tag
+  #       # and puts us at the right distance
 
-        self._photon_rot = (
-          (VISION_DES_ANGLE_deg - targetYaw)
-          * VISION_TURN_kP
-          * constants.Subsystems.Drive.kTranslationSpeedMax
-        )
-        self._photon_xValue = (
-          (VISION_DES_RANGE_m - targetRange)
-          * VISION_STRAFE_kP
-          * constants.Subsystems.Drive.kRotationSpeedMax
-        )
+  #       self._photon_rot = (
+  #         (VISION_DES_ANGLE_deg - targetYaw)
+  #         * VISION_TURN_kP
+  #         * constants.Subsystems.Drive.kTranslationSpeedMax
+  #       )
+  #       self._photon_xValue = (
+  #         (VISION_DES_RANGE_m - targetRange)
+  #         * VISION_STRAFE_kP
+  #         * constants.Subsystems.Drive.kRotationSpeedMax
+  #       )
   
-  def autonomousExit(self) -> None:
+  def autoExit(self) -> None:
     # self.gyroSensor.resetRobotToField(self.localizationService.getRobotPose())
     pass
 
@@ -220,6 +216,5 @@ class RobotCore(wpilib.TimedRobot):
   def _robotHasInitialZeroResets(self) -> bool:
     return utils.isCompetitionMode() or True
 
-  def _updateTelemetry(self) -> None:
-    pass
-    #SmartDashboard.putBoolean("Robot/HasInitialZeroResets", self._robotHasInitialZeroResets())
+  # def _updateTelemetry(self) -> None:
+  #   self._LimelightHelper.updateTelemetry()

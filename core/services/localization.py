@@ -2,21 +2,22 @@ from typing import Callable
 from wpimath.geometry import Rotation2d, Pose2d, Pose3d
 from wpimath.estimator import DifferentialDrivePoseEstimator, MecanumDrivePoseEstimator
 from photonlibpy.photonPoseEstimator import PoseStrategy
-from lib.sensors.pose_sensor import PoseSensor
+from lib.sensors.limelight import LimeLightHelper
 from lib.classes import DifferentialDriveModulePositions
 from lib import utils
 from core.classes import Target, TargetAlignmentLocation, TargetType
 import core.constants as constants
+
 
 class LocalizationService():
   def __init__(
       self,
       getGyroRotation: Callable[[], Rotation2d],
       getModulePositions: Callable[[], DifferentialDriveModulePositions],
-      poseSensors: tuple[PoseSensor, ...]
+      limelight: LimeLightHelper
     ) -> None:
     super().__init__()
-    self._poseSensors = poseSensors
+    self._limelight = limelight
     self._getGyroRotation = getGyroRotation
     self._getModulePositions = getModulePositions
 
@@ -41,17 +42,25 @@ class LocalizationService():
 
   def _updateRobotPose(self) -> None:
     self._poseEstimator.update(self._getGyroRotation(), *self._getModulePositions())
-    for poseSensor in self._poseSensors:
-      estimatedRobotPose = poseSensor.getEstimatedRobotPose()
-      if estimatedRobotPose is not None:
-        pose = estimatedRobotPose.estimatedPose.toPose2d()
-        if utils.isPoseInBounds(pose, constants.Game.Field.kBounds):
-          if estimatedRobotPose.strategy == PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR:
-            self._poseEstimator.addVisionMeasurement(pose, estimatedRobotPose.timestampSeconds, constants.Services.Localization.kVisionMultiTagStandardDeviations)
-          else:
-            ambiguity = sum(target.getPoseAmbiguity() for target in estimatedRobotPose.targetsUsed) / len(estimatedRobotPose.targetsUsed)
-            if utils.isValueInRange(ambiguity, 0, constants.Services.Localization.kVisionMaxPoseAmbiguity):
-              self._poseEstimator.addVisionMeasurement(pose, estimatedRobotPose.timestampSeconds, constants.Services.Localization.kVisionDefaultStandardDeviations)
+
+    if self._limelight.getTV():
+
+      estimated_pose = self._limelight.getBotPoseEstimate()
+      pose = estimated_pose.pose
+
+      if utils.isPoseInBounds(pose, constants.Game.Field.kBounds):
+
+        ambiguity = sum(
+          target.getPoseAmbiguity() for target in estimatedRobotPose.targetsUsed
+        ) / len(estimatedRobotPose.targetsUsed)
+
+        if utils.isValueInRange(ambiguity, 0, constants.Services.Localization.kVisionMaxPoseAmbiguity):
+          self._poseEstimator.addVisionMeasurement(
+            estimated_pose, 
+            estimatedRobotPose.timestampSeconds, 
+            constants.Services.Localization.kVisionDefaultStandardDeviations
+          )
+          
     self._robotPose = self._poseEstimator.getEstimatedPosition()
 
   def getRobotPose(self) -> Pose2d:
@@ -73,8 +82,8 @@ class LocalizationService():
         return target.pose.transformBy(constants.Game.Field.Targets.kTargetAlignmentTransforms[target.type][targetAlignmentLocation])
   
   def hasVisionTargets(self) -> bool:
-    for poseSensor in self._poseSensors:
-      if poseSensor.hasTarget():
+    for self.limelight in self._limelight:
+      if self.limelight.hasTarget():
         return True
     return False
 
