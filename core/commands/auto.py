@@ -42,6 +42,7 @@ class AutoCommands:
     self._autoCommandChooser.addOption("Straight Forward", self.auto_straight)
     self._autoCommandChooser.addOption("Straight Then Right", self.auto_right_turn)
     self._autoCommandChooser.addOption("Straight Then Left", self.auto_left_turn)
+    self._autoCommandChooser.addOption("Advertise Spin", self.advertise_spin)
 
     #self._allianceSelectorChooser = SendableChooser()
     #self._allianceSelectorChooser.setDefaultOption("None", cmd.none)
@@ -167,6 +168,15 @@ class AutoCommands:
         return rotation
 
     return multFactor * 0.10
+
+  def advertise_spin(self) -> Command:
+    return cmd.sequence(
+      self.driveSubsystem.driveCommand(
+        lambda: 0.0,
+        lambda: 0.0,
+        lambda: (360 * 1)
+      ).withTimeout((60 * 5))
+    )
   
   def auto_straight(self) -> Command:
     return cmd.sequence(

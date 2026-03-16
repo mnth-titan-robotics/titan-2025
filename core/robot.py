@@ -25,7 +25,6 @@ import wpilib
 import math
 import limelight
 
-
 class RobotCore(wpilib.TimedRobot):
   #def robotInit(self):
   #  pass
@@ -47,6 +46,7 @@ class RobotCore(wpilib.TimedRobot):
   def _initSensors(self) -> None:
     self.gyroSensor = GyroSensor_ADIS16470(
       wpilib.SPI.Port.kMXP, 
+      
       imuAxisRoll=IMU.IMUAxis.kZ, 
       imuAxisPitch=IMU.IMUAxis.kX, 
       imuAxisYaw=IMU.IMUAxis.kY, 
@@ -110,22 +110,38 @@ class RobotCore(wpilib.TimedRobot):
       )
     )
 
-    # Driver Controller Binds
-    self.driverController.rightStick().whileTrue(self.gameCommands.alignRobotToTargetCommand(TargetAlignmentMode.Translation, TargetAlignmentLocation.Center))
-    #self.driverController.start().onTrue(self.gyroSensor.calibrateCommand())
-    #self.driverController.back().onTrue(self.gyroSensor.resetCommand())
-    self.driverController.start().onTrue(self._resetGyroCommand())
+    standardControlSchema = True
 
-    # Operator Controller Binds
-    self.operatorController.rightTrigger().whileTrue(self.rollerSubsystem.ejectCommand())
-    self.operatorController.rightBumper().whileTrue(self.climberSubsystem.climbCommand())
-    self.operatorController.leftTrigger().whileTrue(self.rollerSubsystem.reverseCommand())
-    self.operatorController.leftBumper().whileTrue(self.climberSubsystem.reverseCommand())
-    self.operatorController.a().whileTrue(self.AlgaeRemoverSubsystem.extendCommand())
-    self.operatorController.b().whileTrue(self.AlgaeRemoverSubsystem.retractCommand())
-    self.operatorController.x().whileTrue(self.Baby_RollerSubsystem.reverseCommand())
-    self.operatorController.y().whileTrue(self.Baby_RollerSubsystem.intakeCommand())
-    self.operatorController.povUp().whileTrue(self.AlgaeRemoverSubsystem.rampCommand())
+    if standardControlSchema:
+      # Driver Controller Binds
+      self.driverController.rightStick().whileTrue(self.gameCommands.alignRobotToTargetCommand(TargetAlignmentMode.Translation, TargetAlignmentLocation.Center))
+      #self.driverController.start().onTrue(self.gyroSensor.calibrateCommand())
+      #self.driverController.back().onTrue(self.gyroSensor.resetCommand())
+      self.driverController.start().onTrue(self._resetGyroCommand())
+
+      # Operator Controller Binds
+      self.operatorController.rightTrigger().whileTrue(self.rollerSubsystem.ejectCommand())
+      self.operatorController.rightBumper().whileTrue(self.climberSubsystem.climbCommand())
+      self.operatorController.leftTrigger().whileTrue(self.rollerSubsystem.reverseCommand())
+      self.operatorController.leftBumper().whileTrue(self.climberSubsystem.reverseCommand())
+      self.operatorController.a().whileTrue(self.AlgaeRemoverSubsystem.extendCommand())
+      self.operatorController.b().whileTrue(self.AlgaeRemoverSubsystem.retractCommand())
+      self.operatorController.x().whileTrue(self.Baby_RollerSubsystem.reverseCommand())
+      self.operatorController.y().whileTrue(self.Baby_RollerSubsystem.intakeCommand())
+      self.operatorController.povUp().whileTrue(self.AlgaeRemoverSubsystem.rampCommand())
+    
+    else:
+      # Driver Controller Binds
+      self.driverController.rightStick().whileTrue(self.gameCommands.alignRobotToTargetCommand(TargetAlignmentMode.Translation, TargetAlignmentLocation.Center))
+      self.driverController.start().onTrue(self._resetGyroCommand())
+      self.driverController.rightBumper().whileTrue(self.climberSubsystem.climbCommand())
+      self.driverController.rightTrigger().whileTrue(self.rollerSubsystem.ejectCommand())
+      self.driverController.leftTrigger().whileTrue(self.rollerSubsystem.reverseCommand())
+      self.driverController.leftBumper().whileTrue(self.climberSubsystem.reverseCommand())
+      self.driverController.a().whileTrue(self.AlgaeRemoverSubsystem.extendCommand())
+      self.driverController.b().whileTrue(self.AlgaeRemoverSubsystem.retractCommand())
+      self.driverController.x().whileTrue(self.Baby_RollerSubsystem.reverseCommand())
+      self.driverController.y().whileTrue(self.Baby_RollerSubsystem.intakeCommand())
 
   def _periodic(self) -> None:
     self.localizationService._periodic()
